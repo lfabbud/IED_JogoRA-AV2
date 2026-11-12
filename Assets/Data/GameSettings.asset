@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27488014cde2b458b969172ad9f8fc2d, type: 3}
+  m_Name: GameSettings
+  m_EditorClassIdentifier: 
+  runDurationSeconds: 60
+  startingLives: 3
+  countdownFrom: 3
+  celebrationSeconds: 4
+  gameOverDelaySeconds: 1
+  hudSlideSeconds: 0.6
+  debugEnabled: 1
+  arScale: 0.08
+  useAnchor: 1
+  beltSpeed: 6
+  laneWidth: 1
+  moduleDepth: 1
+  spawnDistance: 16
+  curveRadius: 2
+  fadeCells: 1
+  beltTextureTileLength: 2
+  beltScrollDirection: 1
+  speedIncreasePercent: 5
+  speedIncreaseEverySeconds: 15
+  speedRampSeconds: 1
+  alertSeconds: 5
+  timerNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  timerAlertColor: {r: 1, g: 0.25, b: 0.2, a: 1}
+  timerBlinkInterval: 0.25
+  stopDecelSeconds: 1.5
+  confettiCount: 80
+  confettiSeconds: 3
+  confettiSize: 0.15
+  laneChangeSeconds: 0.12
+  jumpSeconds: 0.6
+  jumpHeight: 0.9
+  doubleJumpEnabled: 0
+  doubleJumpHeight: 0.9
+  luHitboxSize: {x: 0.6, y: 1.4, z: 0.5}
+  luHitboxCenterY: 0.8
+  obstacleTolerance: 0.15
+  coinTolerance: 0.3
+  clearAheadDistance: 6
+  invincibleSeconds: 3
+  blinkInterval: 0.5
+  blinkSmoothness: 1
+  vortexSpinDegreesPerSecond: 360
+  hitAnimationSeconds: 0.8
+  startEmptyModules: 6
+  minModulesBetweenObstacles: 5
+  obstacleChance: 0.5
+  twoObstacleChance: 0.3
+  sceneryChance: 0.5
+  allowSuspendedAssets: 1
+  suspendedHeightJump: 2.1
+  suspendedHeightDoubleJump: 3
+  maxCoins: 30
+  coinsPerGroup: 3
+  coinSpacingModules: 1
+  coinHeight: 0.5
+  coinStartDelaySeconds: 3
+  coinTailSeconds: 6
+  coinHardSpotChance: 0.6
+  wardrobeColors:
+  - {r: 0.9, g: 0.2, b: 0.25, a: 1}
+  - {r: 1, g: 0.55, b: 0.15, a: 1}
+  - {r: 1, g: 0.85, b: 0.2, a: 1}
+  - {r: 0.25, g: 0.75, b: 0.4, a: 1}
+  - {r: 0.25, g: 0.5, b: 0.95, a: 1}
+  - {r: 0.65, g: 0.4, b: 0.9, a: 1}
+  - {r: 1, g: 1, b: 1, a: 1}
+  - {r: 0.1, g: 0.1, b: 0.1, a: 1}
+  tiers:
+  - minCoins: 15
+    percent: 5
+  - minCoins: 20
+    percent: 10
+  - minCoins: 25
+    percent: 15
+  - minCoins: 30
+    percent: 20
+  sfxCoin: {fileID: 8300000, guid: c7e8e0abfba734c299b87e503cd6b12b, type: 3}
+  sfxJump: {fileID: 8300000, guid: c64850d6f6a3241ccaa0e3acd1fa4d43, type: 3}
+  sfxHit: {fileID: 8300000, guid: cb2c34bb4142449399d3427cdf5e4790, type: 3}
+  sfxBeep: {fileID: 8300000, guid: 082ea11b36c8f4ba6bbf552b1b52bffd, type: 3}
+  sfxStartSiren: {fileID: 8300000, guid: ab743257b01ee47f39703769b7b1fc8c, type: 3}
+  sfxEndAlert: {fileID: 8300000, guid: 41a6368bbfc49434c9aa152c46feee2e, type: 3}
+  sfxVictoryTheme: {fileID: 8300000, guid: c5044ed17e312480d814694164e58f32, type: 3}
+  sfxLose: {fileID: 8300000, guid: 2ecf57366813841bc803bba22e608dcf, type: 3}
+  sfxUnlock: {fileID: 8300000, guid: 8e8eb7a8dd1b84a0c8a41a52d5f77164, type: 3}
