@@ -1,10 +1,13 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 // Toca efeitos sonoros. Um objeto "Audio" com este script em cada cena.
 public class Sfx : MonoBehaviour
 {
     static Sfx instance;
+    // Volume geral dos efeitos (GameSettings.sfxVolume); cada cena o define ao começar.
+    public static float Volume = 1f;
     AudioSource source;
     AudioSource loopSource;
     Coroutine timed;
@@ -21,10 +24,29 @@ public class Sfx : MonoBehaviour
         loopSource.loop = true;
     }
 
+    static AudioClip buttonClip;
+
+    // Liga o som de botão em todos os Button da cena (inclusive os desativados), menos os filhos de "exclude".
+    public static void HookButtons(AudioClip clip, Transform exclude = null)
+    {
+        buttonClip = clip;
+        if (clip == null) return;
+        foreach (var b in Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (exclude != null && b.transform.IsChildOf(exclude)) continue;
+            b.onClick.AddListener(PlayButton);
+        }
+    }
+
+    public static void PlayButton()
+    {
+        Play(buttonClip);
+    }
+
     public static void Play(AudioClip clip, float volume = 1f)
     {
         if (instance == null || instance.source == null || clip == null) return;
-        instance.source.PlayOneShot(clip, volume);
+        instance.source.PlayOneShot(clip, volume * Volume);
     }
 
     // Toca o clipe em repetição por exatamente "seconds" segundos (usado no som da tontura).
@@ -50,6 +72,7 @@ public class Sfx : MonoBehaviour
     IEnumerator TimedRoutine(AudioClip clip, float seconds)
     {
         loopSource.clip = clip;
+        loopSource.volume = Volume;
         loopSource.Play();
         yield return new WaitForSeconds(seconds);
         loopSource.Stop();

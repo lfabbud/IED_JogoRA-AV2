@@ -33,6 +33,8 @@ public class ResultScreen : MonoBehaviour
 
     // "Tentar de novo": o RunnerGame recomeça a partida com a esteira no mesmo lugar.
     public event Action RetryRequested;
+    // "Fases": o RunnerGame abre a lista de fases dentro do jogo.
+    public event Action PhasesRequested;
 
     LevelConfig level;
     int coins;
@@ -41,11 +43,11 @@ public class ResultScreen : MonoBehaviour
     void Start()
     {
         retryButton.onClick.AddListener(() => { if (RetryRequested != null) RetryRequested(); });
-        gameOverPhasesButton.onClick.AddListener(Nav.LoadMenuPhases);
+        gameOverPhasesButton.onClick.AddListener(() => { if (PhasesRequested != null) PhasesRequested(); });
         gameOverScannerButton.onClick.AddListener(Nav.LoadScanner);
 
         couponButton.onClick.AddListener(ShowCoupon);
-        victoryPhasesButton.onClick.AddListener(Nav.LoadMenuPhases);
+        victoryPhasesButton.onClick.AddListener(() => { if (PhasesRequested != null) PhasesRequested(); });
         victoryScannerButton.onClick.AddListener(Nav.LoadScanner);
 
         couponBackButton.onClick.AddListener(() => ui.Show(victoryScreen));

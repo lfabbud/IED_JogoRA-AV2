@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class MenuController : MonoBehaviour
 {
     public LevelCatalog catalog;
+    public LevelThemeApplier theme;
     public UiScreens ui;
     public GameObject mainScreen;
     public GameObject phasesScreen;
@@ -20,6 +21,11 @@ public class MenuController : MonoBehaviour
 
     void Start()
     {
+        OrientationLayout.FollowDevice = catalog.settings != null && catalog.settings.followDeviceOrientation;
+        if (catalog.settings != null) Sfx.Volume = catalog.settings.sfxVolume;
+        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton);
+        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.musicVolume, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
+        if (theme != null) theme.ApplyNeutral(catalog);
         if (resetProgressOnStart) SaveSystem.ResetAll(catalog);
         if (unlockAllForTesting)
         {

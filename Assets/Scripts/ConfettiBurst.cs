@@ -25,7 +25,7 @@ public class ConfettiBurst : MonoBehaviour
         new Color(0.3f, 0.6f, 1f), new Color(0.8f, 0.5f, 1f)
     };
 
-    public void Play(Vector3 localOrigin, Color[] colors, int count, float size, float seconds)
+    public void Play(Vector3 localOrigin, Color[] colors, int count, float size, float seconds, float maxDelay = 0.6f)
     {
         if (colors == null || colors.Length == 0) colors = Fallback;
         duration = seconds;
@@ -54,7 +54,7 @@ public class ConfettiBurst : MonoBehaviour
                 t = go.transform,
                 velocity = dir.normalized * Random.Range(3f, 7f),
                 spin = Random.insideUnitSphere * 540f,
-                delay = Random.Range(0f, 0.6f),
+                delay = Random.Range(0f, maxDelay),
                 life = 0f
             });
             go.SetActive(false);

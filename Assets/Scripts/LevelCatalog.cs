@@ -8,6 +8,12 @@ public class LevelCatalog : ScriptableObject
     public GameSettings settings;
     public LevelConfig[] levels;
 
+    [Header("Tema neutro (telas sem fase definida)")]
+    public Color neutralThemeColor = new Color(0.08f, 0.08f, 0.12f, 1f);
+    public Color neutralAccentColor = new Color(0.76f, 0.55f, 0.86f, 1f);
+    public Color neutralTextColor = Color.white;
+    public Sprite neutralLogo;
+
     public LevelConfig FindByPoster(string imageName)
     {
         if (levels == null) return null;

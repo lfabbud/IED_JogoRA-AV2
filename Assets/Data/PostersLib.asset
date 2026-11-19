@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: PostersLib
+  m_EditorClassIdentifier: 
+  m_GuidLow: 5051636262294345482
+  m_GuidHigh: 10475892143124986279
+  m_DataStore:
+    m_Storage: []
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 4876288892223517714
+      m_GuidHigh: 4727793549349924523
+    m_SerializedTextureGuid:
+      m_GuidLow: 4915521912671817331
+      m_GuidHigh: 3987728214757726747
+    m_Size: {x: 47.315144, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Epoca
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5101590292157111152
+      m_GuidHigh: 4795214965069939882
+    m_SerializedTextureGuid:
+      m_GuidLow: 15297149449542198462
+      m_GuidHigh: 11166510684313482793
+    m_Size: {x: 48.042126, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Estante
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4652720456673743038
+      m_GuidHigh: 1780200727156906383
+    m_SerializedTextureGuid:
+      m_GuidLow: 2606297971893410850
+      m_GuidHigh: 7755957290166730217
+    m_Size: {x: 56.10319, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Goyta
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5003074809436510316
+      m_GuidHigh: 15079425779543792045
+    m_SerializedTextureGuid:
+      m_GuidLow: 16486507945216316849
+      m_GuidHigh: 3238802517147950905
+    m_Size: {x: 63.322353, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Kabum
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5656186930403387430
+      m_GuidHigh: 2474632142540506037
+    m_SerializedTextureGuid:
+      m_GuidLow: 8394832938671294256
+      m_GuidHigh: 10256571775134731705
+    m_Size: {x: 62.93141, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Magalu
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5230383050097160982
+      m_GuidHigh: 11995877038704281010
+    m_SerializedTextureGuid:
+      m_GuidLow: 15276301895741420589
+      m_GuidHigh: 17380093045723151385
+    m_Size: {x: 56.10319, y: 84.1}
+    m_SpecifySize: 1
+    m_Name: Netshoes
+    m_Texture: {fileID: 0}

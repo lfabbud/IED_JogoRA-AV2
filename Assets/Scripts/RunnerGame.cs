@@ -10,7 +10,7 @@ using TMPro;
 // HUD desliza para dentro > contagem regressiva > corrida > resultado. "Tentar de novo" recomeça no mesmo lugar.
 public class RunnerGame : MonoBehaviour
 {
-    enum State { Intro, Placing, Wardrobe, Ready, Countdown, Running, Celebrating, GameOver }
+    enum State { Intro, Placing, Ready, Countdown, Running, Celebrating, GameOver }
 
     [Header("Dados")]
     public LevelCatalog catalog;
@@ -24,8 +24,6 @@ public class RunnerGame : MonoBehaviour
     public HudController hud;
     public OnboardingPanel onboarding;
     public UiScreens ui;
-    public DebugPanel debugPanel;
-    public WardrobeScreen wardrobeScreen;
 
     [Header("Telas")]
     public GameObject introScreen;
@@ -39,6 +37,8 @@ public class RunnerGame : MonoBehaviour
     public Button resumeButton;
     public Button restartButton;
     public Button menuButton;
+    [Tooltip("Opcional: botão de trocar de fase na tela de pause.")]
+    public Button pausePhasesButton;
     public Button placementReviewButton;
     public TMP_Text placementHint;
 
@@ -51,6 +51,9 @@ public class RunnerGame : MonoBehaviour
     LevelConfig level;
     GameSettings settings;
     TrackRoot track;
+    PhasePicker picker;
+    ShowBoxesToggle boxesToggle;
+    bool showBoxes;
     LaneController lu;
     Renderer[] luRenderers;
     GameObject vortex;
@@ -63,11 +66,11 @@ public class RunnerGame : MonoBehaviour
     float hitAnimLeft;
     int lastAlertSecond;
     bool jumpAnimActive;
-    bool godMode;
     bool reviewingOnboarding;
 
     void Start()
     {
+        if (catalog != null && catalog.settings != null) OrientationLayout.FollowDevice = catalog.settings.followDeviceOrientation;
         level = GameSession.SelectedLevel;
         if (level == null) level = testLevel;
         if (level == null && catalog.levels != null && catalog.levels.Length > 0) level = catalog.levels[0];
@@ -78,8 +81,11 @@ public class RunnerGame : MonoBehaviour
         }
         GameSession.SelectedLevel = level;
 
-        // Cópia dos dados: o painel de teste altera só esta cópia, nunca o asset do projeto.
+        // Cópia dos dados: valores alterados em jogo valem só para esta cópia, nunca para o asset do projeto.
         settings = Instantiate(catalog.settings);
+        Sfx.Volume = settings.sfxVolume;
+        Sfx.HookButtons(settings.sfxButton, hud != null && hud.controlsRoot != null ? hud.controlsRoot.transform : null);
+        MusicPlayer.Play(settings.musicGame, settings.musicVolume, settings.musicFadeInSeconds, settings.musicFadeOutSeconds);
 
         theme.Apply(level);
 
@@ -97,13 +103,17 @@ public class RunnerGame : MonoBehaviour
 
         onboarding.Finished += OnOnboardingFinished;
         results.RetryRequested += RestartInPlace;
-        if (wardrobeScreen != null) wardrobeScreen.Done += OnWardrobeDone;
 
-        if (debugPanel != null)
+        boxesToggle = gameObject.AddComponent<ShowBoxesToggle>();
+        boxesToggle.Changed += on =>
         {
-            debugPanel.Setup(settings.debugEnabled);
-            if (settings.debugEnabled) BuildDebug();
-        }
+            showBoxes = on;
+            if (track != null) track.ShowBoxes = on;
+        };
+        picker = gameObject.AddComponent<PhasePicker>();
+        picker.Chosen += SwitchLevel;
+        results.PhasesRequested += ShowPhases;
+        if (pausePhasesButton) pausePhasesButton.onClick.AddListener(ShowPhases);
 
         pauseScreen.SetActive(false);
         ui.Show(introScreen);
@@ -148,6 +158,7 @@ public class RunnerGame : MonoBehaviour
         state = State.Placing;
         ui.Show(placementScreen);
         placeButton.interactable = false;
+        placer.onScreenTest = settings.testOnScreen;
         placer.Begin();
     }
 
@@ -161,47 +172,37 @@ public class RunnerGame : MonoBehaviour
 
         var go = Instantiate(trackPrefab, pose.position, Quaternion.LookRotation(forward.normalized, Vector3.up));
         go.transform.localScale = Vector3.one * settings.arScale;
-        if (settings.useAnchor) go.AddComponent<ARAnchor>();
+        if (settings.testOnScreen && settings.testTiltDegrees > 0f)
+            go.transform.rotation = Quaternion.AngleAxis(-settings.testTiltDegrees, go.transform.right) * go.transform.rotation;
+        if (settings.useAnchor && !settings.testOnScreen) go.AddComponent<ARAnchor>();
         placer.End();
 
         track = go.GetComponent<TrackRoot>();
         lu = track.lu;
         lu.Jumped += OnJumped;
         lu.DoubleJumped += OnDoubleJumped;
+        lu.LaneChanged += dir => Sfx.Play(dir < 0 ? settings.sfxLaneLeft : settings.sfxLaneRight);
         lu.ObstacleTouched += OnObstacleTouched;
         lu.CoinTouched += OnCoinTouched;
         luRenderers = lu.GetComponentsInChildren<Renderer>(true);
 
-        BeginWardrobe();
+        BeginRun();
     }
 
-    // ---------- vestiário ----------
+    // ---------- início da corrida ----------
 
-    // Entre o posicionamento e o aquecimento: o jogador escolhe a cor da meia, do short e do boné da Lu.
-    // Sem LuWardrobe no modelo, ou sem a tela, o jogo segue direto para o aquecimento.
-    void BeginWardrobe()
+    // Entre o posicionamento e o aquecimento: pinta a meia, o short e o boné da Lu com as cores da fase.
+    void BeginRun()
     {
         track.Init(settings, level);
+        if (settings.testOnScreen) CenterTrackVertically();
+        track.ShowBoxes = showBoxes;
         lu.Init(settings);
         SetLuVisible(true);
 
         var wardrobe = lu.GetComponentInChildren<LuWardrobe>(true);
-        if (wardrobe != null) wardrobe.ApplySaved(settings);
-        if (wardrobeScreen == null || wardrobe == null || settings.wardrobeColors == null || settings.wardrobeColors.Length == 0)
-        {
-            PrepareRun();
-            return;
-        }
-
-        PlayState("Preparo");
-        state = State.Wardrobe;
-        ui.Show(wardrobeScreen.gameObject);
-        wardrobeScreen.Open(wardrobe, settings);
-    }
-
-    void OnWardrobeDone()
-    {
-        if (state == State.Wardrobe) PrepareRun();
+        if (wardrobe != null) wardrobe.ApplyLevel(level);
+        PrepareRun();
     }
 
     // ---------- preparar e começar a partida ----------
@@ -222,6 +223,7 @@ public class RunnerGame : MonoBehaviour
         jumpAnimActive = false;
 
         track.Init(settings, level);
+        track.ShowBoxes = showBoxes;
         lu.Init(settings);
         SetLuVisible(true);
         PlayState("Aquecimento");
@@ -232,7 +234,6 @@ public class RunnerGame : MonoBehaviour
         hud.SetLives(lives);
         hud.SetCoins(0);
         hud.SetTimer(settings.runDurationSeconds);
-        hud.PrepareSlide();
         hud.SetCenter("Toque na tela para começar");
 
         readyTimer = 0f;
@@ -243,7 +244,6 @@ public class RunnerGame : MonoBehaviour
     {
         state = State.Countdown;
         hud.SetCenter("");
-        yield return StartCoroutine(hud.SlideIn(settings.hudSlideSeconds));
 
         PlayState("Preparo");
         for (int i = settings.countdownFrom; i > 0; i--)
@@ -267,12 +267,15 @@ public class RunnerGame : MonoBehaviour
 
     void Update()
     {
+        // O checkbox "Show boxes" só aparece antes de a corrida começar.
+        if (boxesToggle != null) boxesToggle.SetVisible(state == State.Intro || state == State.Placing || state == State.Ready);
+
         if (state == State.Placing)
         {
             placeButton.interactable = placer.HasPose;
             if (placementHint)
                 placementHint.text = placer.HasPose
-                    ? "Superfície encontrada. Toque em Posicionar."
+                    ? (settings.testOnScreen ? "Teste na tela. Toque em Posicionar." : "Superfície encontrada. Toque em Posicionar.")
                     : "Aponte para uma superfície plana e mova o celular devagar.";
             if (footprintImage) footprintImage.color = placer.HasPose ? footprintReady : footprintIdle;
         }
@@ -295,7 +298,7 @@ public class RunnerGame : MonoBehaviour
     {
         var pointer = Pointer.current;
         if (pointer == null || !pointer.press.wasPressedThisFrame) return false;
-        if (debugPanel != null && debugPanel.BlocksTap(pointer.position.ReadValue())) return false;
+        if (boxesToggle != null && boxesToggle.BlocksTap(pointer.position.ReadValue())) return false;
         return true;
     }
 
@@ -345,16 +348,17 @@ public class RunnerGame : MonoBehaviour
 
     void OnObstacleTouched(BeltItem item)
     {
-        if (state != State.Running || invincibleLeft > 0f || godMode) return;
+        if (state != State.Running || invincibleLeft > 0f) return;
         OnHit();
     }
 
     void OnCoinTouched(BeltItem item)
     {
         if (state != State.Running || item == null || !item.gameObject.activeInHierarchy) return;
-        track.Remove(item);
+        CoinPickupEffect.Play(track, item, settings);
         coins++;
         hud.SetCoins(coins);
+        hud.PulseCoins();
         Sfx.Play(settings.sfxCoin);
     }
 
@@ -371,7 +375,8 @@ public class RunnerGame : MonoBehaviour
             return;
         }
         invincibleLeft = settings.invincibleSeconds;
-        Sfx.PlayFor(settings.sfxHit, settings.invincibleSeconds);
+        Sfx.Play(settings.sfxHit);
+        Sfx.PlayFor(settings.sfxDizzy, settings.invincibleSeconds);
         PlayState("Esbarrar", true);
         hitAnimLeft = settings.hitAnimationSeconds;
         StartCoroutine(HitEffect());
@@ -401,7 +406,7 @@ public class RunnerGame : MonoBehaviour
             else
             {
                 blink += dt;
-                if (blink >= settings.blinkInterval)
+                if (blink >= BlinkHalf())
                 {
                     blink = 0f;
                     visible = !visible;
@@ -415,10 +420,16 @@ public class RunnerGame : MonoBehaviour
         DestroyVortex();
     }
 
+    // Metade de uma piscada: com N piscadas por segundo, some por 1/(2N) s e aparece por 1/(2N) s.
+    float BlinkHalf()
+    {
+        return 0.5f / Mathf.Max(0.1f, settings.blinksPerSecond);
+    }
+
     // Opacidade da Lu na piscada: mistura a onda seca (liga/desliga) com uma onda suave, conforme blinkSmoothness.
     float BlinkAlpha(float t)
     {
-        float iv = Mathf.Max(0.02f, settings.blinkInterval);
+        float iv = BlinkHalf();
         float square = (Mathf.FloorToInt(t / iv) % 2 == 0) ? 1f : 0f;
         float smooth = 0.5f + 0.5f * Mathf.Cos(Mathf.PI * t / iv);
         return Mathf.Lerp(square, smooth, Mathf.Clamp01(settings.blinkSmoothness));
@@ -439,6 +450,10 @@ public class RunnerGame : MonoBehaviour
         lu.SensorActive = false;
         track.StopBelt();
         SetLuVisible(true);
+        jumpAnimActive = false;
+        hitAnimLeft = 0f;
+        if (HasLuState("Derrota")) PlayState("Derrota");
+        else PlayState("Esbarrar", true);
         DestroyVortex();
         Sfx.StopTimed();
         hud.SetTimerAlert(false);
@@ -464,7 +479,7 @@ public class RunnerGame : MonoBehaviour
         hud.SetControlsVisible(false);
         PlayState("Comemorar");
         Sfx.Play(settings.sfxVictoryTheme);
-        track.PlayConfetti(level.palette);
+        track.PlayConfetti(level.AllColors());
         yield return new WaitForSeconds(settings.celebrationSeconds);
 
         SaveSystem.SaveResult(level, coins, true);
@@ -488,6 +503,13 @@ public class RunnerGame : MonoBehaviour
     }
 
     // Estados opcionais (PularDuplo, Esbarrar): se não existirem no Animator, nada acontece.
+    bool HasLuState(string stateName)
+    {
+        if (track == null || track.luAnimator == null) return false;
+        var anim = track.luAnimator;
+        return anim.HasState(0, Animator.StringToHash(stateName)) || anim.HasState(0, Animator.StringToHash("Base Layer." + stateName));
+    }
+
     void PlayState(string stateName, bool optional = false)
     {
         if (track == null || track.luAnimator == null) return;
@@ -545,51 +567,48 @@ public class RunnerGame : MonoBehaviour
         Nav.LoadMenu();
     }
 
-    // ---------- painel de teste ----------
-
-    void BuildDebug()
+    // Teste na tela: só a altura muda. O centro da esteira sobe ou desce até ficar no centro vertical da tela;
+    // a distância e o alinhamento lateral continuam os do posicionador.
+    void CenterTrackVertically()
     {
-        var d = debugPanel;
-        d.AddInfo(delegate
+        var cam = placer.arCamera;
+        if (cam == null) return;
+        for (int pass = 0; pass < 3; pass++)
         {
-            return state + " | moedas " + coins + " | vidas " + lives + " | " + elapsed.ToString("0.0") + " s";
-        });
-        d.AddInfo(delegate
-        {
-            if (track == null) return "esteira ainda não posicionada";
-            return "vel " + track.CurrentSpeed.ToString("0.0") + " | módulo " + track.ModuleIndex + " | itens " + track.ItemCount;
-        });
-
-        d.AddFloat("Velocidade da esteira", () => settings.beltSpeed, v => settings.beltSpeed = v, 0.5f, 1f, 20f);
-        d.AddFloat("Aumento de velocidade (%)", () => settings.speedIncreasePercent, v => settings.speedIncreasePercent = v, 1f, 0f, 50f);
-        d.AddFloat("A cada (s)", () => settings.speedIncreaseEverySeconds, v => settings.speedIncreaseEverySeconds = v, 1f, 1f, 60f);
-        d.AddFloat("Chance de obstáculo", () => settings.obstacleChance, v => settings.obstacleChance = v, 0.05f, 0f, 1f);
-        d.AddFloat("Módulos entre obstáculos", () => settings.minModulesBetweenObstacles, v => settings.minModulesBetweenObstacles = Mathf.RoundToInt(v), 1f, 1f, 12f, "0");
-        d.AddFloat("Moedas em lugar difícil", () => settings.coinHardSpotChance, v => settings.coinHardSpotChance = v, 0.1f, 0f, 1f);
-        d.AddFloat("Altura do pulo", () => settings.jumpHeight, v => settings.jumpHeight = v, 0.1f, 0.3f, 2f);
-        d.AddFloat("Tolerância obstáculo", () => settings.obstacleTolerance, v => settings.obstacleTolerance = v, 0.05f, 0f, 0.5f);
-        d.AddFloat("Tolerância moeda", () => settings.coinTolerance, v => settings.coinTolerance = v, 0.1f, 0f, 1f);
-        d.AddFloat("Invencível/pisca/redemoinho (s)", () => settings.invincibleSeconds, v => settings.invincibleSeconds = v, 0.5f, 0.5f, 10f);
-        d.AddFloat("Piscada suave (0 seca, 1 gradual)", () => settings.blinkSmoothness, v => settings.blinkSmoothness = v, 0.1f, 0f, 1f);
-        d.AddFloat("Alerta final (s)", () => settings.alertSeconds, v => settings.alertSeconds = v, 1f, 0f, 15f, "0");
-        d.AddBool("Salto duplo", () => settings.doubleJumpEnabled, v => settings.doubleJumpEnabled = v);
-        d.AddBool("Assets suspensos", () => settings.allowSuspendedAssets, v => settings.allowSuspendedAssets = v);
-        d.AddBool("Sem perder vida", () => godMode, v => godMode = v);
-
-        d.AddButtons(
-            new[] { "+1 vida", "+5 moedas", "Vitória" },
-            new System.Action[]
+            Bounds b = new Bounds();
+            bool has = false;
+            foreach (var r in track.GetComponentsInChildren<Renderer>())
             {
-                () => { if (state == State.Running) { lives = Mathf.Min(lives + 1, 9); hud.SetLives(lives); } },
-                () => { if (state == State.Running) { coins += 5; hud.SetCoins(coins); } },
-                () => { if (state == State.Running) elapsed = settings.runDurationSeconds; }
-            });
-        d.AddButtons(
-            new[] { "Derrota", "Recomeçar" },
-            new System.Action[]
-            {
-                () => { if (state == State.Running) StartCoroutine(Lose()); },
-                RestartInPlace
-            });
+                if (r is LineRenderer || r.transform.IsChildOf(lu.transform)) continue;
+                if (!has) { b = r.bounds; has = true; }
+                else b.Encapsulate(r.bounds);
+            }
+            if (!has) return;
+            Vector3 sp = cam.WorldToScreenPoint(b.center);
+            if (sp.z <= 0.01f) return;
+            float worldPerPixel = 2f * sp.z * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) / Mathf.Max(1f, cam.pixelHeight);
+            track.transform.position += Vector3.up * ((cam.pixelHeight * 0.5f - sp.y) * worldPerPixel);
+        }
+    }
+
+    // ---------- trocar de fase dentro do jogo ----------
+
+    void ShowPhases()
+    {
+        if (picker != null) picker.Open(catalog, settings.testUnlockAllLevels, level);
+    }
+
+    // Troca a fase sem escanear de novo e sem reposicionar a esteira: tema, esteira, roupas da Lu e partida recomeçam.
+    void SwitchLevel(LevelConfig newLevel)
+    {
+        if (newLevel == null) return;
+        Resume();
+        level = newLevel;
+        GameSession.SelectedLevel = level;
+        theme.Apply(level);
+        if (track == null || lu == null) return;
+        var wardrobe = lu.GetComponentInChildren<LuWardrobe>(true);
+        if (wardrobe != null) wardrobe.ApplyLevel(level);
+        PrepareRun();
     }
 }

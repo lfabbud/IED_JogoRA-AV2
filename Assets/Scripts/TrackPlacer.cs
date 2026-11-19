@@ -11,6 +11,11 @@ public class TrackPlacer : MonoBehaviour
     public Camera arCamera;
     public GameObject reticlePrefab;
 
+    // Teste na tela (sem AR): distância à frente e queda abaixo da câmera, em metros.
+    public bool onScreenTest;
+    public float onScreenDistance = 0.7f;
+    public float onScreenDrop = 0.3f;
+
     public bool HasPose { get; private set; }
     public Pose CurrentPose { get; private set; }
 
@@ -39,7 +44,24 @@ public class TrackPlacer : MonoBehaviour
 
     void Update()
     {
-        if (!active || raycastManager == null) return;
+        if (!active) return;
+
+        if (onScreenTest)
+        {
+            if (arCamera == null) return;
+            Vector3 fwd = Vector3.ProjectOnPlane(arCamera.transform.forward, Vector3.up);
+            if (fwd.sqrMagnitude < 0.001f) fwd = Vector3.forward;
+            CurrentPose = new Pose(arCamera.transform.position + fwd.normalized * onScreenDistance + Vector3.down * onScreenDrop, Quaternion.identity);
+            HasPose = true;
+            if (reticle != null)
+            {
+                reticle.SetActive(true);
+                reticle.transform.SetPositionAndRotation(CurrentPose.position, CurrentPose.rotation);
+            }
+            return;
+        }
+
+        if (raycastManager == null) return;
 
         HasPose = false;
         var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);

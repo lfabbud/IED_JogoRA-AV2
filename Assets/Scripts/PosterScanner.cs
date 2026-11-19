@@ -15,6 +15,7 @@ public class PosterScanner : MonoBehaviour
     public ARTrackedImageManager imageManager;
     public UiScreens ui;
     public OnboardingPanel onboarding;
+    public LevelThemeApplier theme;
     public GameObject onboardingScreen;
     public GameObject scanScreen;
     public TMP_Text hintText;
@@ -37,6 +38,11 @@ public class PosterScanner : MonoBehaviour
 
     void Start()
     {
+        OrientationLayout.FollowDevice = catalog.settings != null && catalog.settings.followDeviceOrientation;
+        if (catalog.settings != null) Sfx.Volume = catalog.settings.sfxVolume;
+        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton);
+        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.musicVolume, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
+        if (theme != null) theme.ApplyNeutral(catalog);
         imageManager.enabled = false;
         imageManager.trackablesChanged.AddListener(OnTrackablesChanged);
 

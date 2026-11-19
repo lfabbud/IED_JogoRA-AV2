@@ -41,6 +41,14 @@ public class OnboardingPanel : MonoBehaviour
         if (closeButton) closeButton.onClick.AddListener(Finish);
     }
 
+    // Cor dos pontos: o ponto da página atual usa "on"; os demais, a mesma cor mais transparente.
+    public void SetDotColors(Color on)
+    {
+        dotOn = new Color(on.r, on.g, on.b, 1f);
+        dotOff = new Color(on.r, on.g, on.b, 0.3f);
+        if (isActiveAndEnabled) Show(index);
+    }
+
     void Show(int i)
     {
         if (pages == null || pages.Length == 0) return;

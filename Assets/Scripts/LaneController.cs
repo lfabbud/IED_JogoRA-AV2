@@ -14,6 +14,8 @@ public class LaneController : MonoBehaviour
 
     public event Action Jumped;
     public event Action DoubleJumped;
+    // Parâmetro: -1 = trocou para a esquerda, 1 = trocou para a direita.
+    public event Action<int> LaneChanged;
     public event Action<BeltItem> ObstacleTouched;
     public event Action<BeltItem> CoinTouched;
 
@@ -53,13 +55,17 @@ public class LaneController : MonoBehaviour
     public void MoveLeft()
     {
         if (!CanControl) return;
-        lane = Mathf.Max(1, lane - 1);
+        int old = lane;
+        lane = Mathf.Max(0, lane - 1);
+        if (lane != old && LaneChanged != null) LaneChanged(-1);
     }
 
     public void MoveRight()
     {
         if (!CanControl) return;
-        lane = Mathf.Min(3, lane + 1);
+        int old = lane;
+        lane = Mathf.Min(4, lane + 1);
+        if (lane != old && LaneChanged != null) LaneChanged(1);
     }
 
     public void Jump()

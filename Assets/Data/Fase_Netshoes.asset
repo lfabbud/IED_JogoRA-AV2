@@ -22,11 +22,29 @@ MonoBehaviour:
   noRewardMessage: "Voc\xEA coletou {moedas} moedas. Tente de novo para ganhar um
     desconto!"
   themeColor: {r: 0.85882354, g: 1, b: 0.28235295, a: 1}
-  accentColor: {r: 0.4392157, g: 0, b: 0.9647059, a: 1}
-  trackColor: {r: 0.4392157, g: 0, b: 0.9647059, a: 1}
-  palette: []
+  accentColor: {r: 0.9607843, g: 0.9764706, b: 0.8627451, a: 1}
+  trackColor: {r: 0.3137255, g: 0.14117648, b: 0.69803923, a: 1}
+  bodyColor: {r: 0.85882354, g: 1, b: 0.28235295, a: 1}
+  panelColor: {r: 0.9607843, g: 0.9764706, b: 0.8627451, a: 1}
+  textColor: {r: 0.3137255, g: 0.14117648, b: 0.69803923, a: 1}
+  primaryPalette:
+  - {r: 0.9607843, g: 0.9764706, b: 0.8627451, a: 0}
+  - {r: 0.9372549, g: 0.9764706, b: 0.7254902, a: 0}
+  - {r: 0.88235295, g: 0.9843137, b: 0.40784314, a: 0}
+  - {r: 0.8392157, g: 0.9764706, b: 0.03137255, a: 0}
+  - {r: 0.73333335, g: 0.80784315, b: 0.03529412, a: 0}
+  - {r: 0.5254902, g: 0.54901963, b: 0.047058824, a: 0}
+  secondaryPalette:
+  - {r: 0.6784314, g: 0.5411765, b: 0.9764706, a: 0}
+  - {r: 0.5254902, g: 0.3372549, b: 0.9372549, a: 0}
+  - {r: 0.3137255, g: 0.14117648, b: 0.69803923, a: 0}
+  - {r: 0.1882353, g: 0.09803922, b: 0.4392157, a: 0}
+  capColor: {r: 0.85882354, g: 1, b: 0.28235295, a: 1}
+  shortsColor: {r: 0.6784314, g: 0.5411765, b: 0.9764706, a: 1}
+  socksColor: {r: 0.9607843, g: 0.9764706, b: 0.8627451, a: 1}
+  beltPrefab: {fileID: 6747352078651722143, guid: ba5b17355372642d78d83f437963b45c, type: 3}
   productPrefab: {fileID: 0}
-  coinPrefab: {fileID: 0}
+  coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 0}
   vortexPrefab: {fileID: 0}
   posterUnlockPrefab: {fileID: 0}

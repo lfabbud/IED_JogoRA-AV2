@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Fica no LuModelo. Pinta a meia, o short e o boné da Lu com as cores escolhidas no vestiário.
+// Fica no LuModelo. Pinta a meia, o short e o boné da Lu com as cores da fase (Level Config > Roupas da Lu).
 // Cada peça aponta para os Renderers (e, se quiser, um material específico) que ela pinta.
 public class LuWardrobe : MonoBehaviour
 {
@@ -78,14 +78,12 @@ public class LuWardrobe : MonoBehaviour
         return false;
     }
 
-    // Aplica as cores salvas no aparelho (peças sem escolha mantêm a cor original do modelo).
-    public void ApplySaved(GameSettings settings)
+    // Pinta as peças com as cores da fase: Element 0 = meia, Element 1 = short, Element 2 = boné.
+    public void ApplyLevel(LevelConfig level)
     {
-        if (settings == null || settings.wardrobeColors == null) return;
-        for (int i = 0; i < PartCount; i++)
-        {
-            int index = SaveSystem.GetWardrobe(i);
-            if (index >= 0 && index < settings.wardrobeColors.Length) Apply(i, settings.wardrobeColors[index]);
-        }
+        if (level == null) return;
+        Apply(0, level.socksColor);
+        Apply(1, level.shortsColor);
+        Apply(2, level.capColor);
     }
 }

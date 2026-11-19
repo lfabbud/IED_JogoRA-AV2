@@ -21,12 +21,30 @@ MonoBehaviour:
   couponMessage: Apresente este QR Code e ganhe {desconto}% de desconto em {marca}.
   noRewardMessage: "Voc\xEA coletou {moedas} moedas. Tente de novo para ganhar um
     desconto!"
-  themeColor: {r: 0.42352942, g: 0.7137255, b: 0.67058825, a: 1}
-  accentColor: {r: 0.21568628, g: 0.3529412, b: 0.30980393, a: 1}
-  trackColor: {r: 0.105882354, g: 0.1882353, b: 0.16862746, a: 1}
-  palette: []
+  themeColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
+  accentColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
+  trackColor: {r: 0.023529412, g: 0.31764707, b: 0.25882354, a: 1}
+  bodyColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
+  panelColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
+  textColor: {r: 0.023529412, g: 0.31764707, b: 0.25882354, a: 1}
+  primaryPalette:
+  - {r: 0.88235295, g: 0.9764706, b: 0.95686275, a: 0}
+  - {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 0}
+  - {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 0}
+  - {r: 0.023529412, g: 0.7294118, b: 0.60784316, a: 0}
+  - {r: 0.023529412, g: 0.5176471, b: 0.42352942, a: 0}
+  - {r: 0.023529412, g: 0.31764707, b: 0.25882354, a: 0}
+  secondaryPalette:
+  - {r: 0.972549, g: 0.96862745, b: 0.9764706, a: 0}
+  - {r: 0.90588236, g: 0.8980392, b: 0.9137255, a: 0}
+  - {r: 0.72156864, g: 0.7137255, b: 0.7294118, a: 0}
+  - {r: 0.5137255, g: 0.5137255, b: 0.5176471, a: 0}
+  capColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
+  shortsColor: {r: 0.023529412, g: 0.31764707, b: 0.25882354, a: 1}
+  socksColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
+  beltPrefab: {fileID: 5210373044277725308, guid: 6f9e5b42d9b634b45b8c081682cf1583, type: 3}
   productPrefab: {fileID: 0}
-  coinPrefab: {fileID: 0}
+  coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 0}
   vortexPrefab: {fileID: 0}
   posterUnlockPrefab: {fileID: 0}

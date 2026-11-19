@@ -2,7 +2,10 @@ using System;
 using UnityEngine;
 
 // Altura em que um asset aparece na esteira: encostado no piso ou suspenso na altura do pulo normal / do pulo duplo.
-public enum AssetHeight { Floor, Jump, DoubleJump, Random }
+public enum AssetHeight { Floor, Jump, DoubleJump }
+
+// Faces do modelo 3D (eixos locais do prefab). Usadas nas travas de rotação.
+public enum AssetFace { Down, Up, Left, Right, Back, Front }
 
 // Uma fase = um asset deste tipo. Muda o tema (assets 3D, cores, textos, logo);
 // a mecânica fica em GameSettings.
@@ -16,13 +19,27 @@ public class LevelConfig : ScriptableObject
     public class AssetEntry
     {
         public GameObject prefab;
-        [Tooltip("Marcado: só aparece nas trilhas 0 e 4 (cenário, sem colisão). Desmarcado: obstáculo nas trilhas 1 a 3.")]
+        [Tooltip("Suspenso: no momento todas as 5 trilhas são jogáveis e este campo não tem efeito.")]
         public bool onlyEdgeLanes = false;
         [Range(1, 3)] public int cellsAcross = 1;
         [Range(1, 3)] public int cellsAlong = 1;
+        [Tooltip("Altura do espaço reservado, em caixas (1 caixa = metade da largura de uma pista). Só serve para conferir o tamanho.")]
+        [Range(1, 3)] public int cellsHigh = 1;
         [Tooltip("Obstáculo baixo que dá para pular. Desmarcado: Lu precisa trocar de pista.")]
         public bool canBeJumped = true;
-        public AssetHeight height = AssetHeight.Floor;
+        [Tooltip("Alturas possíveis do asset. O sistema sorteia entre as marcadas (marque de 1 a 3). Sem nenhuma marcada, vale o piso.")]
+        public bool heightFloor = true;
+        public bool heightJump = false;
+        [Tooltip("Só é usada com Salto duplo ligado nas configurações.")]
+        public bool heightDoubleJump = false;
+        [Tooltip("Sorteia uma das orientações possíveis (giros de 90 graus nos 3 eixos). Orientações que não cabem no espaço reservado são descartadas.")]
+        public bool randomRotation = false;
+        [Tooltip("Trava: a face escolhida fica sempre virada para o piso.")]
+        public bool lockFloor = false;
+        public AssetFace floorFace = AssetFace.Down;
+        [Tooltip("Trava: a face escolhida fica sempre virada para a Lu.")]
+        public bool lockFront = false;
+        public AssetFace frontFace = AssetFace.Front;
     }
 
     [Header("Identificação")]
@@ -41,10 +58,41 @@ public class LevelConfig : ScriptableObject
     public Color themeColor = new Color(0.08f, 0.08f, 0.12f, 1f);
     public Color accentColor = new Color(0.76f, 0.55f, 0.86f, 1f);
     public Color trackColor = Color.white;
-    [Tooltip("Cores sorteadas para pintar as peças de cada asset (obstáculos e cenário) e os confetes.")]
-    public Color[] palette;
+    [Tooltip("Cor do corpo da esteira 3D (todas as peças do modelo, menos a Fita e o PainelTopo).")]
+    public Color bodyColor = Color.white;
+    [Tooltip("Cor do PainelTopo da esteira 3D.")]
+    public Color panelColor = Color.white;
+    [Tooltip("Cor das letras (títulos e textos) sobre o fundo da fase.")]
+    public Color textColor = Color.white;
+    [Tooltip("Cores PRIMÁRIAS (você define). Cada obstáculo instanciado nas pistas do meio (1 a 3) recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("palette")]
+    public Color[] primaryPalette;
+    [Tooltip("Cores SECUNDÁRIAS (você define). Cada objeto de cenário instanciado nas pistas das laterais (0 e 4) recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
+    public Color[] secondaryPalette;
+
+    // Paleta de uma peça: pistas das laterais = secundária; pistas do meio = primária.
+    public Color[] PaletteFor(bool edgeLane)
+    {
+        return edgeLane ? secondaryPalette : primaryPalette;
+    }
+
+    // Confetes: sorteiam entre as duas paletas.
+    public Color[] AllColors()
+    {
+        var l = new System.Collections.Generic.List<Color>();
+        if (primaryPalette != null) l.AddRange(primaryPalette);
+        if (secondaryPalette != null) l.AddRange(secondaryPalette);
+        return l.ToArray();
+    }
+
+    [Header("Roupas da Lu")]
+    public Color capColor = Color.white;
+    public Color shortsColor = Color.white;
+    public Color socksColor = Color.white;
 
     [Header("Assets 3D")]
+    [Tooltip("Modelo 3D da esteira desta fase. Precisa de dois pontos (objetos vazios) chamados PontoLu e PontoFundo e de uma peça chamada Fita. Vazio: usa o quadro simples do prefab.")]
+    public GameObject beltPrefab;
     public GameObject productPrefab;
     public GameObject coinPrefab;
     public GameObject finishLinePrefab;

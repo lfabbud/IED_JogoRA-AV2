@@ -69,24 +69,51 @@ public class DebugPanel : MonoBehaviour
         toggleRect.anchoredPosition = new Vector2(0f, -20f);
         toggleLabel = toggle.GetComponentInChildren<TMP_Text>();
 
-        panel = new GameObject("PainelDebug", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup));
+        // Painel com rolagem: ocupa a largura de 980 e a altura da tela (menos o botão no topo e uma folga embaixo);
+        // se as linhas não couberem, arraste para cima/baixo (ou use a roda do mouse).
+        panel = new GameObject("PainelDebug", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
         panel.transform.SetParent(root.transform, false);
         panelRect = (RectTransform)panel.transform;
-        panelRect.anchorMin = new Vector2(0.5f, 1f);
+        panelRect.anchorMin = new Vector2(0.5f, 0f);
         panelRect.anchorMax = new Vector2(0.5f, 1f);
         panelRect.pivot = new Vector2(0.5f, 1f);
-        panelRect.sizeDelta = new Vector2(980f, 1560f);
+        panelRect.sizeDelta = new Vector2(980f, -130f);
         panelRect.anchoredPosition = new Vector2(0f, -110f);
         panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.82f);
-        var v = panel.GetComponent<VerticalLayoutGroup>();
-        v.padding = new RectOffset(16, 16, 16, 16);
+
+        var viewport = new GameObject("Janela", typeof(RectTransform), typeof(RectMask2D));
+        viewport.transform.SetParent(panel.transform, false);
+        var vr = (RectTransform)viewport.transform;
+        vr.anchorMin = Vector2.zero;
+        vr.anchorMax = Vector2.one;
+        vr.offsetMin = new Vector2(16f, 16f);
+        vr.offsetMax = new Vector2(-16f, -16f);
+
+        var list = new GameObject("Conteudo", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        list.transform.SetParent(viewport.transform, false);
+        var cr = (RectTransform)list.transform;
+        cr.anchorMin = new Vector2(0f, 1f);
+        cr.anchorMax = new Vector2(1f, 1f);
+        cr.pivot = new Vector2(0.5f, 1f);
+        cr.anchoredPosition = Vector2.zero;
+        cr.sizeDelta = Vector2.zero;
+        var v = list.GetComponent<VerticalLayoutGroup>();
         v.spacing = 8f;
         v.childControlWidth = true;
         v.childControlHeight = true;
         v.childForceExpandWidth = true;
         v.childForceExpandHeight = false;
         v.childAlignment = TextAnchor.UpperCenter;
-        content = panel.transform;
+        list.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var scroll = panel.GetComponent<ScrollRect>();
+        scroll.viewport = vr;
+        scroll.content = cr;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 40f;
+        content = list.transform;
         panel.SetActive(false);
 
         AddInfo(delegate { return "FPS " + fps.ToString("0"); });

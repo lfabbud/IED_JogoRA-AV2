@@ -17,11 +17,13 @@ MonoBehaviour:
   countdownFrom: 3
   celebrationSeconds: 4
   gameOverDelaySeconds: 1
-  hudSlideSeconds: 0.6
-  debugEnabled: 1
-  arScale: 0.08
+  testUnlockAllLevels: 1
+  testOnScreen: 1
+  testTiltDegrees: 15
+  followDeviceOrientation: 0
+  arScale: 0.0846
   useAnchor: 1
-  beltSpeed: 6
+  beltSpeed: 5
   laneWidth: 1
   moduleDepth: 1
   spawnDistance: 16
@@ -29,6 +31,8 @@ MonoBehaviour:
   fadeCells: 1
   beltTextureTileLength: 2
   beltScrollDirection: 1
+  beltScrollOnU: 0
+  cellHeightRatio: 0.5
   speedIncreasePercent: 5
   speedIncreaseEverySeconds: 15
   speedRampSeconds: 1
@@ -43,7 +47,7 @@ MonoBehaviour:
   laneChangeSeconds: 0.12
   jumpSeconds: 0.6
   jumpHeight: 0.9
-  doubleJumpEnabled: 0
+  doubleJumpEnabled: 1
   doubleJumpHeight: 0.9
   luHitboxSize: {x: 0.6, y: 1.4, z: 0.5}
   luHitboxCenterY: 0.8
@@ -51,7 +55,7 @@ MonoBehaviour:
   coinTolerance: 0.3
   clearAheadDistance: 6
   invincibleSeconds: 3
-  blinkInterval: 0.5
+  blinksPerSecond: 6
   blinkSmoothness: 1
   vortexSpinDegreesPerSecond: 360
   hitAnimationSeconds: 0.8
@@ -59,26 +63,25 @@ MonoBehaviour:
   minModulesBetweenObstacles: 5
   obstacleChance: 0.5
   twoObstacleChance: 0.3
+  threeObstacleChance: 0.2
+  lateralMisalignment: 0.959
+  maxHeightFactor: 3
   sceneryChance: 0.5
   allowSuspendedAssets: 1
-  suspendedHeightJump: 2.1
-  suspendedHeightDoubleJump: 3
+  suspendedOverlap: 0.3
   maxCoins: 30
-  coinsPerGroup: 3
-  coinSpacingModules: 1
   coinHeight: 0.5
+  coinReachMargin: 0.1
   coinStartDelaySeconds: 3
   coinTailSeconds: 6
   coinHardSpotChance: 0.6
-  wardrobeColors:
-  - {r: 0.9, g: 0.2, b: 0.25, a: 1}
-  - {r: 1, g: 0.55, b: 0.15, a: 1}
-  - {r: 1, g: 0.85, b: 0.2, a: 1}
-  - {r: 0.25, g: 0.75, b: 0.4, a: 1}
-  - {r: 0.25, g: 0.5, b: 0.95, a: 1}
-  - {r: 0.65, g: 0.4, b: 0.9, a: 1}
-  - {r: 1, g: 1, b: 1, a: 1}
-  - {r: 0.1, g: 0.1, b: 0.1, a: 1}
+  coinScale: 0.9
+  coinPopSeconds: 0.1
+  coinPopScale: 0.5
+  coinPopRise: 0.5
+  coinSparkCount: 16
+  coinSparkSize: 0.02
+  coinSparkFallbackColor: {r: 1, g: 0.8670459, b: 0.41037738, a: 1}
   tiers:
   - minCoins: 15
     percent: 5
@@ -88,12 +91,22 @@ MonoBehaviour:
     percent: 15
   - minCoins: 30
     percent: 20
-  sfxCoin: {fileID: 8300000, guid: c7e8e0abfba734c299b87e503cd6b12b, type: 3}
-  sfxJump: {fileID: 8300000, guid: c64850d6f6a3241ccaa0e3acd1fa4d43, type: 3}
-  sfxHit: {fileID: 8300000, guid: cb2c34bb4142449399d3427cdf5e4790, type: 3}
-  sfxBeep: {fileID: 8300000, guid: 082ea11b36c8f4ba6bbf552b1b52bffd, type: 3}
-  sfxStartSiren: {fileID: 8300000, guid: ab743257b01ee47f39703769b7b1fc8c, type: 3}
-  sfxEndAlert: {fileID: 8300000, guid: 41a6368bbfc49434c9aa152c46feee2e, type: 3}
-  sfxVictoryTheme: {fileID: 8300000, guid: c5044ed17e312480d814694164e58f32, type: 3}
-  sfxLose: {fileID: 8300000, guid: 2ecf57366813841bc803bba22e608dcf, type: 3}
-  sfxUnlock: {fileID: 8300000, guid: 8e8eb7a8dd1b84a0c8a41a52d5f77164, type: 3}
+  musicOpening: {fileID: 0}
+  musicGame: {fileID: 8300000, guid: 5638ea9ceb8b44da8b70db269e5ef80d, type: 3}
+  musicVolume: 0.6
+  musicFadeInSeconds: 0.5
+  musicFadeOutSeconds: 0.5
+  sfxVolume: 0.7
+  sfxButton: {fileID: 0}
+  sfxLaneLeft: {fileID: 0}
+  sfxLaneRight: {fileID: 0}
+  sfxCoin: {fileID: 8300000, guid: 9a5a5cde07dc64e4984bf6b34f3e3429, type: 3}
+  sfxJump: {fileID: 8300000, guid: cd1556f204f0e4f99bb42fac1a29e28d, type: 3}
+  sfxHit: {fileID: 8300000, guid: 506b67c4a50f74ded98f522f599cca71, type: 3}
+  sfxDizzy: {fileID: 8300000, guid: 7d370437c50054e63a83e98e9bf69bbb, type: 3}
+  sfxBeep: {fileID: 8300000, guid: 176b476cd438b4f71946bcb7afb5528d, type: 3}
+  sfxStartSiren: {fileID: 8300000, guid: 01d82eaa0260340d290cb39cc618f26a, type: 3}
+  sfxEndAlert: {fileID: 8300000, guid: 6950c5eb855a84ca195d4c56e06b886d, type: 3}
+  sfxVictoryTheme: {fileID: 8300000, guid: d8eb0235e4b7c4a77824f9cd6fed40df, type: 3}
+  sfxLose: {fileID: 8300000, guid: 33181da2e2d2e47e4815ac62a1256760, type: 3}
+  sfxUnlock: {fileID: 8300000, guid: 2973bf1e8889a472198b37643709a06f, type: 3}
