@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -6,11 +7,11 @@ using UnityEngine.XR.ARFoundation;
 using TMPro;
 
 // Cena de jogo (única, parametrizada pela fase escolhida).
-// Fluxo: introdução > onboarding (só na 1ª vez) > posicionar a esteira > vestiário > Lu aquecendo, esperando o toque na tela >
+// Fluxo: introdução > onboarding (só na 1ª vez) > posicionar a esteira > esteira aterrissa (TrackLanding) > Lu aquecendo, esperando o toque na tela >
 // HUD desliza para dentro > contagem regressiva > corrida > resultado. "Tentar de novo" recomeça no mesmo lugar.
 public class RunnerGame : MonoBehaviour
 {
-    enum State { Intro, Placing, Ready, Countdown, Running, Celebrating, GameOver }
+    enum State { Intro, Placing, Landing, Ready, Countdown, Running, Celebrating, GameOver }
 
     [Header("Dados")]
     public LevelCatalog catalog;
@@ -51,6 +52,12 @@ public class RunnerGame : MonoBehaviour
     LevelConfig level;
     GameSettings settings;
     TrackRoot track;
+    TrackLanding landing;
+    bool anchorAfterLanding;
+    // Moedas já contadas nesta partida: cada moeda soma uma vez só, mesmo que o contato seja avisado mais de uma vez.
+    readonly HashSet<BeltItem> countedCoins = new HashSet<BeltItem>();
+    bool stepsOn;
+    int lastHitIndex = -1;
     PhasePicker picker;
     ShowBoxesToggle boxesToggle;
     bool showBoxes;
@@ -174,7 +181,12 @@ public class RunnerGame : MonoBehaviour
         go.transform.localScale = Vector3.one * settings.arScale;
         if (settings.testOnScreen && settings.testTiltDegrees > 0f)
             go.transform.rotation = Quaternion.AngleAxis(-settings.testTiltDegrees, go.transform.right) * go.transform.rotation;
-        if (settings.useAnchor && !settings.testOnScreen) go.AddComponent<ARAnchor>();
+        // Aterrissagem: a esteira cai sobre o marcador. O ARAnchor só entra depois da queda, para o AR não brigar com a animação.
+        landing = go.GetComponent<TrackLanding>();
+        if (landing == null) landing = go.AddComponent<TrackLanding>();
+        bool wantAnchor = settings.useAnchor && !settings.testOnScreen;
+        if (wantAnchor && !landing.enableLanding) go.AddComponent<ARAnchor>();
+        anchorAfterLanding = wantAnchor && landing.enableLanding;
         placer.End();
 
         track = go.GetComponent<TrackRoot>();
@@ -202,6 +214,31 @@ public class RunnerGame : MonoBehaviour
 
         var wardrobe = lu.GetComponentInChildren<LuWardrobe>(true);
         if (wardrobe != null) wardrobe.ApplyLevel(level);
+
+        if (landing != null && landing.enableLanding) StartCoroutine(LandingRoutine());
+        else PrepareRun();
+    }
+
+    // Esteira e Lu (já vestida) caem sobre o marcador; ao terminar, entra o ARAnchor e começa o aquecimento.
+    IEnumerator LandingRoutine()
+    {
+        state = State.Landing;
+        placeButton.interactable = false;
+        if (placementHint) placementHint.text = "";
+
+        Vector3 ground = track.transform.position;
+        landing.Begin(ground);
+        float t = 0f;
+        while (!landing.Finished(t))
+        {
+            t += Time.deltaTime;
+            landing.Step(t);
+            yield return null;
+        }
+        landing.Step(landing.TotalSeconds);
+        landing.End();
+
+        if (anchorAfterLanding && track.GetComponent<ARAnchor>() == null) track.gameObject.AddComponent<ARAnchor>();
         PrepareRun();
     }
 
@@ -212,6 +249,8 @@ public class RunnerGame : MonoBehaviour
     {
         StopAllCoroutines();
         Sfx.StopTimed();
+        StopSteps();
+        countedCoins.Clear();
         DestroyVortex();
 
         lives = settings.startingLives;
@@ -234,7 +273,7 @@ public class RunnerGame : MonoBehaviour
         hud.SetLives(lives);
         hud.SetCoins(0);
         hud.SetTimer(settings.runDurationSeconds);
-        hud.SetCenter("Toque na tela para começar");
+        hud.SetCenter(settings.readyMessage);
 
         readyTimer = 0f;
         state = State.Ready;
@@ -246,20 +285,24 @@ public class RunnerGame : MonoBehaviour
         hud.SetCenter("");
 
         PlayState("Preparo");
+        // Com um som único da contagem (Sfx Countdown), ele toca uma vez junto com o primeiro número e não há bips.
+        bool wholeSound = settings.sfxCountdown != null;
+        if (wholeSound) Sfx.Play(settings.sfxCountdown);
         for (int i = settings.countdownFrom; i > 0; i--)
         {
-            hud.SetCenter(i.ToString());
-            Sfx.Play(settings.sfxBeep);
+            hud.SetCenter(CountdownText(i));
+            if (!wholeSound) Sfx.Play(settings.sfxBeep);
             yield return new WaitForSeconds(1f);
         }
 
-        hud.SetCenter("JÁ!");
+        hud.SetCenter(settings.goMessage);
         Sfx.Play(settings.sfxStartSiren);
         PlayState("Correr");
         hud.SetControlsVisible(true);
         lu.CanControl = true;
         lu.SensorActive = true;
         state = State.Running;
+        StartSteps();
 
         yield return new WaitForSeconds(0.7f);
         if (state == State.Running) hud.SetCenter("");
@@ -275,8 +318,8 @@ public class RunnerGame : MonoBehaviour
             placeButton.interactable = placer.HasPose;
             if (placementHint)
                 placementHint.text = placer.HasPose
-                    ? (settings.testOnScreen ? "Teste na tela. Toque em Posicionar." : "Superfície encontrada. Toque em Posicionar.")
-                    : "Aponte para uma superfície plana e mova o celular devagar.";
+                    ? (settings.testOnScreen ? settings.placementTestMessage : settings.placementFoundMessage)
+                    : settings.placementSearchingMessage;
             if (footprintImage) footprintImage.color = placer.HasPose ? footprintReady : footprintIdle;
         }
         else if (state == State.Ready)
@@ -310,6 +353,13 @@ public class RunnerGame : MonoBehaviour
         bool spawning = elapsed < settings.runDurationSeconds;
         if (!spawning && !track.FinishSpawned) track.SpawnFinish();
         track.Tick(dt, elapsed, spawning);
+
+        // Passadas: tocam correndo e param enquanto a Lu está no ar.
+        if (lu.IsAirborne == stepsOn)
+        {
+            if (stepsOn) StopSteps();
+            else StartSteps();
+        }
 
         float left = Mathf.Max(0f, settings.runDurationSeconds - elapsed);
         hud.SetTimer(left);
@@ -355,6 +405,7 @@ public class RunnerGame : MonoBehaviour
     void OnCoinTouched(BeltItem item)
     {
         if (state != State.Running || item == null || !item.gameObject.activeInHierarchy) return;
+        if (!countedCoins.Add(item)) return;
         CoinPickupEffect.Play(track, item, settings);
         coins++;
         hud.SetCoins(coins);
@@ -370,12 +421,12 @@ public class RunnerGame : MonoBehaviour
 
         if (lives <= 0)
         {
-            Sfx.Play(settings.sfxHit);
+            Sfx.Play(PickHitSound());
             StartCoroutine(Lose());
             return;
         }
         invincibleLeft = settings.invincibleSeconds;
-        Sfx.Play(settings.sfxHit);
+        Sfx.Play(PickHitSound());
         Sfx.PlayFor(settings.sfxDizzy, settings.invincibleSeconds);
         PlayState("Esbarrar", true);
         hitAnimLeft = settings.hitAnimationSeconds;
@@ -459,6 +510,7 @@ public class RunnerGame : MonoBehaviour
         hud.SetTimerAlert(false);
         hud.SetControlsVisible(false);
         Sfx.Play(settings.sfxLose);
+        StopSteps();
         yield return new WaitForSeconds(settings.gameOverDelaySeconds);
 
         SaveSystem.SaveResult(level, coins, false);
@@ -475,6 +527,7 @@ public class RunnerGame : MonoBehaviour
         SetLuVisible(true);
         DestroyVortex();
         Sfx.StopTimed();
+        StopSteps();
         hud.SetTimerAlert(false);
         hud.SetControlsVisible(false);
         PlayState("Comemorar");
@@ -484,6 +537,43 @@ public class RunnerGame : MonoBehaviour
 
         SaveSystem.SaveResult(level, coins, true);
         results.ShowVictory(level, coins, settings.GetTier(coins));
+    }
+
+    // ---------- textos e passadas ----------
+
+    // Texto de cada passo da contagem: o {n} vira o número da vez.
+    string CountdownText(int n)
+    {
+        string template = string.IsNullOrEmpty(settings.countdownMessage) ? "{n}" : settings.countdownMessage;
+        return template.Replace("{n}", n.ToString());
+    }
+
+    // Sorteia um dos sons de batida preenchidos, sem repetir o anterior (se houver mais de um).
+    AudioClip PickHitSound()
+    {
+        var list = settings.sfxHits;
+        if (list == null) return null;
+        var options = new List<int>();
+        for (int i = 0; i < list.Length; i++)
+        {
+            if (list[i] != null) options.Add(i);
+        }
+        if (options.Count == 0) return null;
+        if (options.Count > 1) options.Remove(lastHitIndex);
+        lastHitIndex = options[Random.Range(0, options.Count)];
+        return list[lastHitIndex];
+    }
+
+    void StartSteps()
+    {
+        stepsOn = true;
+        Sfx.StartSteps(settings.sfxFootsteps, settings.footstepsVolume);
+    }
+
+    void StopSteps()
+    {
+        stepsOn = false;
+        Sfx.StopSteps();
     }
 
     // ---------- animação, pulo, pause ----------

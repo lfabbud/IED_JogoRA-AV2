@@ -10,6 +10,7 @@ public class Sfx : MonoBehaviour
     public static float Volume = 1f;
     AudioSource source;
     AudioSource loopSource;
+    AudioSource stepsSource;
     Coroutine timed;
 
     void Awake()
@@ -22,6 +23,11 @@ public class Sfx : MonoBehaviour
         loopSource.playOnAwake = false;
         loopSource.spatialBlend = 0f;
         loopSource.loop = true;
+        // Passadas da Lu: tocador próprio em repetição, separado do som da tontura (loopSource).
+        stepsSource = gameObject.AddComponent<AudioSource>();
+        stepsSource.playOnAwake = false;
+        stepsSource.spatialBlend = 0f;
+        stepsSource.loop = true;
     }
 
     static AudioClip buttonClip;
@@ -55,6 +61,22 @@ public class Sfx : MonoBehaviour
         if (instance == null || clip == null) return;
         instance.StopTimedInternal();
         instance.timed = instance.StartCoroutine(instance.TimedRoutine(clip, seconds));
+    }
+
+    // Passadas: toca o clipe em repetição, desde o começo, até StopSteps.
+    public static void StartSteps(AudioClip clip, float volume = 1f)
+    {
+        if (instance == null || instance.stepsSource == null || clip == null) return;
+        var src = instance.stepsSource;
+        src.Stop();
+        src.clip = clip;
+        src.volume = volume * Volume;
+        src.Play();
+    }
+
+    public static void StopSteps()
+    {
+        if (instance != null && instance.stepsSource != null) instance.stepsSource.Stop();
     }
 
     public static void StopTimed()

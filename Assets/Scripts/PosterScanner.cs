@@ -9,7 +9,7 @@ using UnityEngine.XR.ARSubsystems;
 // Cada poster reconhecido desbloqueia a fase e mostra os elementos 3D saindo do poster.
 // Enquanto nenhum poster é reconhecido, aparece no centro da tela a imagem e o texto de "procurando".
 // Um botão no HUD permite rever o onboarding a qualquer momento.
-public class PosterScanner : MonoBehaviour
+public class PosterScanner : MonoBehaviour, IPhasePreview
 {
     public LevelCatalog catalog;
     public ARTrackedImageManager imageManager;
@@ -124,6 +124,21 @@ public class PosterScanner : MonoBehaviour
             go.SetActive(isTracking);
     }
 
+    // Pré-visualização na Scene: título e logo da fase desbloqueada. O banner continua como está na Hierarchy.
+    public void ApplyPreview(LevelConfig level)
+    {
+        if (Application.isPlaying || level == null) return;
+        if (unlockedTitleText) unlockedTitleText.text = level.Format(level.scannerUnlockedMessage, 0, 0);
+        if (unlockedLogo)
+        {
+            unlockedLogo.sprite = level.brandLogo;
+            unlockedLogo.preserveAspect = true;
+            unlockedLogo.enabled = level.brandLogo != null;
+        }
+    }
+
+    public void ClearPreview() { }
+
     void OnPosterFound(LevelConfig level)
     {
         bool firstTime = !SaveSystem.IsUnlocked(level);
@@ -133,7 +148,7 @@ public class PosterScanner : MonoBehaviour
             Sfx.Play(catalog.settings.sfxUnlock);
         }
         lastLevel = level;
-        unlockedTitleText.text = firstTime ? "Fase " + level.displayName + " desbloqueada!" : "Fase " + level.displayName;
+        unlockedTitleText.text = level.Format(firstTime ? level.scannerUnlockedMessage : level.scannerRevisitMessage, 0, 0);
         if (unlockedLogo)
         {
             unlockedLogo.sprite = level.brandLogo;

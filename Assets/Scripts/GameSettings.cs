@@ -22,6 +22,20 @@ public class GameSettings : ScriptableObject
     public float celebrationSeconds = 4f;
     public float gameOverDelaySeconds = 1f;
 
+    [Header("Textos de jogo")]
+    [Tooltip("Tela de posicionar, no teste na tela (sem AR).")]
+    [TextArea(1, 3)] public string placementTestMessage = "Teste na tela. Toque em Posicionar.";
+    [Tooltip("Tela de posicionar, quando a superfície foi encontrada.")]
+    [TextArea(1, 3)] public string placementFoundMessage = "Superfície encontrada. Toque em Posicionar.";
+    [Tooltip("Tela de posicionar, enquanto procura uma superfície.")]
+    [TextArea(1, 3)] public string placementSearchingMessage = "Aponte para uma superfície plana e mova o celular devagar.";
+    [Tooltip("Aparece no centro do HUD, com a Lu aquecendo, antes de a contagem começar.")]
+    [TextArea(1, 3)] public string readyMessage = "Toque na tela para começar";
+    [Tooltip("Texto de cada passo da contagem regressiva. {n} vira o número da vez (3, 2, 1). O número inicial está em Countdown From, na seção Partida.")]
+    public string countdownMessage = "{n}";
+    [Tooltip("Aparece quando a contagem termina e a corrida começa.")]
+    public string goMessage = "JÁ!";
+
     [Header("Teste")]
     [Tooltip("A lista de trocar de fase mostra todas as fases, mesmo as ainda bloqueadas. Desmarque antes do build final.")]
     public bool testUnlockAllLevels = true;
@@ -168,11 +182,17 @@ public class GameSettings : ScriptableObject
     public AudioClip sfxLaneRight;
     public AudioClip sfxCoin;
     public AudioClip sfxJump;
-    [Tooltip("Toca uma vez no instante em que a Lu é atingida.")]
-    public AudioClip sfxHit;
+    [Tooltip("Passadas da Lu: tocam em repetição enquanto ela corre e param enquanto ela está no ar (pulo). O arquivo precisa emendar sem pausa ao repetir.")]
+    public AudioClip sfxFootsteps;
+    [Range(0f, 1f)] public float footstepsVolume = 1f;
+    [Tooltip("Sons de batida nos obstáculos. A cada batida toca um destes, sorteado, sem repetir o mesmo duas vezes seguidas. Sons vazios são ignorados.")]
+    public AudioClip[] sfxHits = new AudioClip[3];
     [Tooltip("Toca em repetição durante o tempo de tontura e invencibilidade (som de passarinho).")]
     public AudioClip sfxDizzy;
+    [Tooltip("Toca em cada número da contagem regressiva. Não toca quando o campo Sfx Countdown tem um som.")]
     public AudioClip sfxBeep;
+    [Tooltip("Som único da contagem regressiva inteira: toca uma vez, junto com o primeiro número, no lugar dos bips. Deve durar o tempo da contagem (1 segundo por número). Vazio: toca o Sfx Beep em cada número.")]
+    public AudioClip sfxCountdown;
     public AudioClip sfxStartSiren;
     public AudioClip sfxEndAlert;
     public AudioClip sfxVictoryTheme;

@@ -17,6 +17,13 @@ MonoBehaviour:
   countdownFrom: 3
   celebrationSeconds: 4
   gameOverDelaySeconds: 1
+  placementTestMessage: "Ajuste a posi\xE7\xE3o do jogo em uma superf\xEDcie horizontal"
+  placementFoundMessage: "Superf\xEDcie encontrada:\ntoque no bot\xE3o para posicionar."
+  placementSearchingMessage: "Aponte para uma superf\xEDcie plana e mova seu aparelho
+    devagar"
+  readyMessage: "Toque na tela para come\xE7ar"
+  countdownMessage: '{n}'
+  goMessage: VAI!
   testUnlockAllLevels: 1
   testOnScreen: 1
   testTiltDegrees: 15
@@ -64,49 +71,54 @@ MonoBehaviour:
   obstacleChance: 0.5
   twoObstacleChance: 0.3
   threeObstacleChance: 0.2
-  lateralMisalignment: 0.959
+  lateralMisalignment: 1
   maxHeightFactor: 3
   sceneryChance: 0.5
   allowSuspendedAssets: 1
   suspendedOverlap: 0.3
   maxCoins: 30
   coinHeight: 0.5
-  coinReachMargin: 0.1
+  coinReachMargin: 0
   coinStartDelaySeconds: 3
   coinTailSeconds: 6
-  coinHardSpotChance: 0.6
-  coinScale: 0.9
+  coinHardSpotChance: 0.3
+  coinScale: 0.8
   coinPopSeconds: 0.1
   coinPopScale: 0.5
   coinPopRise: 0.5
-  coinSparkCount: 16
+  coinSparkCount: 24
   coinSparkSize: 0.02
   coinSparkFallbackColor: {r: 1, g: 0.8670459, b: 0.41037738, a: 1}
   tiers:
-  - minCoins: 15
+  - minCoins: 0
     percent: 5
-  - minCoins: 20
+  - minCoins: 10
     percent: 10
-  - minCoins: 25
+  - minCoins: 20
     percent: 15
   - minCoins: 30
     percent: 20
   musicOpening: {fileID: 0}
   musicGame: {fileID: 8300000, guid: 5638ea9ceb8b44da8b70db269e5ef80d, type: 3}
-  musicVolume: 0.6
+  musicVolume: 0.5
   musicFadeInSeconds: 0.5
   musicFadeOutSeconds: 0.5
   sfxVolume: 0.7
-  sfxButton: {fileID: 0}
+  sfxButton: {fileID: 8300000, guid: bb602473a7bb0440c85bb245cc9cc802, type: 3}
   sfxLaneLeft: {fileID: 0}
   sfxLaneRight: {fileID: 0}
   sfxCoin: {fileID: 8300000, guid: 9a5a5cde07dc64e4984bf6b34f3e3429, type: 3}
   sfxJump: {fileID: 8300000, guid: cd1556f204f0e4f99bb42fac1a29e28d, type: 3}
-  sfxHit: {fileID: 8300000, guid: 506b67c4a50f74ded98f522f599cca71, type: 3}
+  sfxFootsteps: {fileID: 8300000, guid: f0f8608395d2b496997a91dc4ed2ec79, type: 3}
+  footstepsVolume: 1
+  sfxHits:
+  - {fileID: 8300000, guid: 4c2b9847585304456b1c781d37345f9d, type: 3}
+  - {fileID: 8300000, guid: 4349e09948c1f44e2807a6fa4d3bf91a, type: 3}
   sfxDizzy: {fileID: 8300000, guid: 7d370437c50054e63a83e98e9bf69bbb, type: 3}
   sfxBeep: {fileID: 8300000, guid: 176b476cd438b4f71946bcb7afb5528d, type: 3}
+  sfxCountdown: {fileID: 8300000, guid: b34c5c5cda4c24397863b31ff7b94747, type: 3}
   sfxStartSiren: {fileID: 8300000, guid: 01d82eaa0260340d290cb39cc618f26a, type: 3}
   sfxEndAlert: {fileID: 8300000, guid: 6950c5eb855a84ca195d4c56e06b886d, type: 3}
-  sfxVictoryTheme: {fileID: 8300000, guid: d8eb0235e4b7c4a77824f9cd6fed40df, type: 3}
-  sfxLose: {fileID: 8300000, guid: 33181da2e2d2e47e4815ac62a1256760, type: 3}
-  sfxUnlock: {fileID: 8300000, guid: 2973bf1e8889a472198b37643709a06f, type: 3}
+  sfxVictoryTheme: {fileID: 8300000, guid: 2e07c0b6b198045ba9381c197717f5a6, type: 3}
+  sfxLose: {fileID: 8300000, guid: a75f99c1496db4532bec15e72e5b855f, type: 3}
+  sfxUnlock: {fileID: 8300000, guid: a92c984f2c4444d7aba1e6532c7e8fe0, type: 3}

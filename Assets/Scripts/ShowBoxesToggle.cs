@@ -68,9 +68,11 @@ public class ShowBoxesToggle : MonoBehaviour
         var tgo = new GameObject("Texto", typeof(RectTransform));
         tgo.transform.SetParent(row.transform, false);
         var t = tgo.AddComponent<TextMeshProUGUI>();
+        if (LevelThemeApplier.ButtonFont != null) t.font = LevelThemeApplier.ButtonFont;
         t.text = "Show boxes";
-        t.fontSize = 34f;
+        t.fontSize = 10f;
         t.alignment = TextAlignmentOptions.Left;
+        t.textWrappingMode = TextWrappingModes.NoWrap;
         t.color = Color.white;
         t.raycastTarget = false;
         var tr = (RectTransform)tgo.transform;

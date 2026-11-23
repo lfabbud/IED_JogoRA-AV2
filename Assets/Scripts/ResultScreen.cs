@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 // Cards de fim de partida: game over (tentar de novo / fases / escanear), vitória (mensagem, moedas,
 // objeto 3D do desconto, botão do cupom) e a tela do cupom com o QR Code de exemplo.
-public class ResultScreen : MonoBehaviour
+public class ResultScreen : MonoBehaviour, IPhasePreview
 {
     public UiScreens ui;
     public ProductDisplay productDisplay;
@@ -19,7 +19,6 @@ public class ResultScreen : MonoBehaviour
 
     [Header("Vitória")]
     public GameObject victoryScreen;
-    public TMP_Text victoryMessageText;
     public TMP_Text victoryCoinsText;
     public GameObject productGroup;
     public Button couponButton;
@@ -28,7 +27,6 @@ public class ResultScreen : MonoBehaviour
 
     [Header("Cupom")]
     public GameObject couponScreen;
-    public TMP_Text couponMessageText;
     public Button couponBackButton;
 
     // "Tentar de novo": o RunnerGame recomeça a partida com a esteira no mesmo lugar.
@@ -53,6 +51,28 @@ public class ResultScreen : MonoBehaviour
         couponBackButton.onClick.AddListener(() => ui.Show(victoryScreen));
     }
 
+    // Pré-visualização na Scene: textos de vitória, cupom e game over com a fase escolhida e a maior faixa de desconto.
+    // As telas continuam desativadas; ative a que quiser ver na Hierarchy.
+    public void ApplyPreview(LevelConfig lvl)
+    {
+        if (Application.isPlaying || lvl == null) return;
+        var st = PhasePreview.Settings();
+        int pct = 0;
+        int c = 0;
+        if (st != null && st.tiers != null && st.tiers.Length > 0)
+        {
+            var t = st.tiers[st.tiers.Length - 1];
+            pct = t.percent;
+            c = t.minCoins;
+        }
+        if (gameOverCoinsText) gameOverCoinsText.text = c + " moedas";
+        if (victoryCoinsText) victoryCoinsText.text = c + " moedas";
+        LevelThemeApplier.SetText(gameObject.scene, "RewardMessage", lvl.Format(lvl.rewardMessage, c, pct));
+        LevelThemeApplier.SetText(gameObject.scene, "CouponMessage", lvl.Format(lvl.couponMessage, c, pct));
+    }
+
+    public void ClearPreview() { }
+
     public void ShowGameOver(LevelConfig levelConfig, int collectedCoins)
     {
         level = levelConfig;
@@ -69,12 +89,7 @@ public class ResultScreen : MonoBehaviour
         bool hasReward = tier != null;
 
         if (victoryCoinsText) victoryCoinsText.text = coins + " moedas";
-        if (victoryMessageText)
-        {
-            victoryMessageText.text = hasReward
-                ? level.Format(level.rewardMessage, coins, tier.percent)
-                : level.Format(level.noRewardMessage, coins, 0);
-        }
+        LevelThemeApplier.SetText(gameObject.scene, "RewardMessage", level.Format(level.rewardMessage, coins, hasReward ? tier.percent : 0));
         if (productGroup) productGroup.SetActive(hasReward);
         couponButton.gameObject.SetActive(hasReward);
         if (hasReward && productDisplay != null) productDisplay.Show(level.productPrefab);
@@ -85,7 +100,7 @@ public class ResultScreen : MonoBehaviour
     void ShowCoupon()
     {
         if (level == null || tier == null) return;
-        if (couponMessageText) couponMessageText.text = level.Format(level.couponMessage, coins, tier.percent);
+        LevelThemeApplier.SetText(gameObject.scene, "CouponMessage", level.Format(level.couponMessage, coins, tier.percent));
         ui.Show(couponScreen);
     }
 }

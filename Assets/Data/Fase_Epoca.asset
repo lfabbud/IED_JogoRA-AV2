@@ -13,20 +13,23 @@ MonoBehaviour:
   m_Name: Fase_Epoca
   m_EditorClassIdentifier: 
   id: epoca
-  displayName: Epoca
-  posterImageName: Epoca
+  displayName: "\xC9poca"
+  posterImageName: "\xC9poca"
   brandLogo: {fileID: 21300000, guid: be9acbd75cdea4e82ae90634a800747e, type: 3}
-  introText: (inserir texto intro Epoca)
-  rewardMessage: "Parab\xE9ns! Voc\xEA ganhou {desconto}% de desconto em {marca}."
-  couponMessage: Apresente este QR Code e ganhe {desconto}% de desconto em {marca}.
-  noRewardMessage: "Voc\xEA coletou {moedas} moedas. Tente de novo para ganhar um
-    desconto!"
+  introText: "Ajude a Lu a chegar ao final deste percurso.\n\nQuanto mais moedas
+    conseguir coletar, mais desconto ir\xE1 conseguir no produto especialmente escolhido
+    para voc\xEA!"
+  rewardMessage: e ganhou <b>{desconto}%</b> de desconto em um <b>protetor solar!</b>
+  couponMessage: "Apresente este <b>QR Code</b> \ne ganhe <b>{desconto}%</b> de desconto\nno
+    produto <b>{marca}</b>."
+  scannerUnlockedMessage: "O jogo da {marca} \nfoi desbloqueado!"
+  scannerRevisitMessage: Jogo da {marca}
   themeColor: {r: 0.84313726, g: 0.39607844, b: 0.54509807, a: 1}
   accentColor: {r: 0.9764706, g: 0.83137256, b: 0.8901961, a: 1}
-  trackColor: {r: 0.56078434, g: 0.41960785, b: 0.70980394, a: 1}
+  trackColor: {r: 0.8156863, g: 0.60784316, b: 0.972549, a: 1}
   bodyColor: {r: 0.84313726, g: 0.39607844, b: 0.54509807, a: 1}
   panelColor: {r: 0.95686275, g: 0.6901961, b: 0.7921569, a: 1}
-  textColor: {r: 0.56078434, g: 0.41960785, b: 0.70980394, a: 1}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
   primaryPalette:
   - {r: 0.9764706, g: 0.83137256, b: 0.8901961, a: 0}
   - {r: 0.95686275, g: 0.6901961, b: 0.7921569, a: 0}
@@ -45,7 +48,7 @@ MonoBehaviour:
   beltPrefab: {fileID: 7759517147088737932, guid: 5722535e271f748d99f6c781e1547a7c, type: 3}
   productPrefab: {fileID: 0}
   coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
-  finishLinePrefab: {fileID: 0}
+  finishLinePrefab: {fileID: 2548172821796378333, guid: be806ccefbff94ee894006366113a227, type: 3}
   vortexPrefab: {fileID: 0}
   posterUnlockPrefab: {fileID: 0}
   assets:

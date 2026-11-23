@@ -5,7 +5,7 @@ using UnityEngine;
 // 2 de cenário nas pontas e 3 de ação no meio), as moedas e a linha de chegada, e move todos os itens pelo percurso
 // (curva distante > trecho reto > fade out depois da casa da Lu). Tudo em coordenadas locais.
 // Eixos locais: +Z = lado de onde vêm os itens (horizonte); X = trilhas 0 a 4 (centro = 2); Lu fica em Z = 0.
-public class TrackRoot : MonoBehaviour
+public class TrackRoot : MonoBehaviour, IPhasePreview
 {
     [Header("Referências (dentro do prefab)")]
     public Renderer beltRenderer;
@@ -62,6 +62,113 @@ public class TrackRoot : MonoBehaviour
     float decelRate;
     bool decelerating;
 
+    const string PreviewName = "[Pré-visualização]";
+
+    // Onde nascem a esteira e os itens. No jogo é o próprio TrackRoot; na pré-visualização é um objeto temporário que não é salvo.
+    Transform Holder
+    {
+        get
+        {
+            if (Application.isPlaying) return transform;
+            var h = transform.Find(PreviewName);
+            return h != null ? h : transform;
+        }
+    }
+
+    static void Kill(UnityEngine.Object o)
+    {
+        if (o == null) return;
+        if (Application.isPlaying) Destroy(o);
+        else DestroyImmediate(o);
+    }
+
+    // Cor sem criar cópia do material (vale fora do Play): vai num MaterialPropertyBlock, só na tela.
+    static void PaintRenderer(Renderer r, Color c)
+    {
+        var pb = new MaterialPropertyBlock();
+        int n = Mathf.Max(1, r.sharedMaterials.Length);
+        for (int k = 0; k < n; k++)
+        {
+            r.GetPropertyBlock(pb, k);
+            pb.SetColor("_BaseColor", c);
+            pb.SetColor("_Color", c);
+            r.SetPropertyBlock(pb, k);
+        }
+    }
+
+    // Pré-visualização na Scene: esteira 3D da fase com as cores, e uma amostra de cada obstáculo (nas pistas 1 a 3),
+    // da moeda e da linha de chegada, em fileiras diante da Lu. Nada disso é salvo na cena nem no prefab.
+    public void ApplyPreview(LevelConfig lvl)
+    {
+        if (Application.isPlaying || lvl == null) return;
+        var settings = PhasePreview.Settings();
+        if (settings == null)
+        {
+            Debug.LogWarning("[Lu] Pré-visualização: não encontrei um Level Catalog com GameSettings no projeto.");
+            return;
+        }
+        ClearPreview();
+        var holder = new GameObject(PreviewName);
+        holder.transform.SetParent(transform, false);
+        Init(settings, lvl);
+        for (int i = 0; i < 5; i++) laneShift[i] = 0f;
+        BuildPreviewSamples();
+        PhasePreview.MarkTemporary(holder);
+    }
+
+    void BuildPreviewSamples()
+    {
+        float w = s.laneWidth;
+        float z = 2f * L;
+        float rowDepth = 0f;
+        int n = 0;
+        if (level.assets != null)
+        {
+            foreach (var e in level.assets)
+            {
+                if (e == null || e.prefab == null) continue;
+                if (z > flatEnd - L) break;
+                int col = 1 + (n % 3);
+                int along = Mathf.Max(1, e.cellsAlong);
+                SpawnItem(e.prefab, BeltKind.Obstacle, (col - 2) * w, 0f, arc + flatEnd - z, along * L * 0.5f, e.canBeJumped, e);
+                rowDepth = Mathf.Max(rowDepth, along);
+                if (n % 3 == 2)
+                {
+                    z += (rowDepth + 0.5f) * L;
+                    rowDepth = 0f;
+                }
+                n++;
+            }
+            if (n % 3 != 0) z += (rowDepth + 0.5f) * L;
+        }
+        if (level.coinPrefab != null)
+            SpawnItem(level.coinPrefab, BeltKind.Coin, 0f, s.coinHeight, arc + flatEnd - L, L * 0.5f, false);
+        if (level.finishLinePrefab != null && z <= flatEnd - L)
+        {
+            SpawnFinish();
+            var f = items[items.Count - 1];
+            f.s = arc + flatEnd - z;
+            UpdateItem(f);
+        }
+    }
+
+    public void ClearPreview()
+    {
+        if (Application.isPlaying) return;
+        var h = transform.Find(PreviewName);
+        if (h != null) DestroyImmediate(h.gameObject);
+        items.Clear();
+        beltModel = null;
+        beltMat = null;
+        if (limitsObj != null) DestroyImmediate(limitsObj);
+        limitsObj = null;
+        if (beltRenderer != null)
+        {
+            beltRenderer.forceRenderingOff = false;
+            beltRenderer.SetPropertyBlock(null);
+        }
+    }
+
     public void Init(GameSettings settings, LevelConfig levelConfig)
     {
         s = settings;
@@ -78,10 +185,15 @@ public class TrackRoot : MonoBehaviour
         float nearZ = -(0.5f * L + fadeLen);
         float length = flatEnd - nearZ;
         beltTile = Mathf.Max(0.01f, s.beltTextureTileLength);
-        if (beltModel != null) Destroy(beltModel);
+        if (beltModel != null) Kill(beltModel);
         beltModel = null;
         beltMat = null;
         if (level.beltPrefab != null) BuildBeltModel();
+        else if (!Application.isPlaying)
+        {
+            beltRenderer.forceRenderingOff = false;
+            PaintRenderer(beltRenderer, level.trackColor);
+        }
         else
         {
             beltRenderer.enabled = true;
@@ -119,8 +231,9 @@ public class TrackRoot : MonoBehaviour
     // PontoFundo indica o lado do horizonte (+Z). A peça "Fita" recebe a cor da pista e a textura rolando.
     void BuildBeltModel()
     {
-        beltRenderer.enabled = false;
-        beltModel = Instantiate(level.beltPrefab, transform);
+        if (Application.isPlaying) beltRenderer.enabled = false;
+        else beltRenderer.forceRenderingOff = true;
+        beltModel = Instantiate(level.beltPrefab, Holder);
         var bt = beltModel.transform;
         // A rotação do raiz do prefab (por exemplo, -90 em X vinda do FBX do Blender) é mantida; só a posição volta a zero.
         Quaternion baseRot = bt.localRotation;
@@ -158,8 +271,16 @@ public class TrackRoot : MonoBehaviour
         if (fr == null) fr = fita.GetComponentInChildren<Renderer>();
         if (fr != null)
         {
-            beltMat = fr.material;
-            beltMat.color = level.trackColor;
+            if (Application.isPlaying)
+            {
+                beltMat = fr.material;
+                beltMat.color = level.trackColor;
+            }
+            else
+            {
+                beltMat = fr.sharedMaterial;
+                PaintRenderer(fr, level.trackColor);
+            }
             beltTile = 1f;
             Bounds fb;
             if (BeltItem.LocalBounds(transform, fita, out fb))
@@ -169,7 +290,7 @@ public class TrackRoot : MonoBehaviour
                 float h = fb.size.y;
                 float perim = h < 0.05f ? fb.size.z : 2f * Mathf.Max(0f, fb.size.z - h) + Mathf.PI * h;
                 beltTile = Mathf.Max(0.01f, perim / Mathf.Max(0.01f, beltMat.mainTextureScale.y));
-                Debug.Log("[Lu] Fita: perímetro " + perim.ToString("0.00") + ", repetições da textura na volta " + beltMat.mainTextureScale.y.ToString("0.##") + ", cada repetição mede " + beltTile.ToString("0.000") + ", textura: " + (beltMat.mainTexture != null ? beltMat.mainTexture.name : "nenhuma") + ".");
+                if (Application.isPlaying) Debug.Log("[Lu] Fita: perímetro " + perim.ToString("0.00") + ", repetições da textura na volta " + beltMat.mainTextureScale.y.ToString("0.##") + ", cada repetição mede " + beltTile.ToString("0.000") + ", textura: " + (beltMat.mainTexture != null ? beltMat.mainTexture.name : "nenhuma") + ".");
                 if (Mathf.Abs(fb.size.x - s.laneWidth * 5f) > 0.05f * s.laneWidth * 5f)
                     Warn("belt-width", "Esteira " + level.displayName + ": a Fita tem " + fb.size.x.ToString("0.00") + " de largura; as 5 pistas pedem " + (s.laneWidth * 5f).ToString("0.00") + ".");
             }
@@ -183,6 +304,11 @@ public class TrackRoot : MonoBehaviour
         {
             if (IsUnder(r.transform, "Fita", root)) continue;
             Color c = IsUnder(r.transform, "PainelTopo", root) ? level.panelColor : level.bodyColor;
+            if (!Application.isPlaying)
+            {
+                PaintRenderer(r, c);
+                continue;
+            }
             var ms = r.materials;
             foreach (var m in ms)
             {
@@ -321,7 +447,7 @@ public class TrackRoot : MonoBehaviour
     GameObject BuildOriented(LevelConfig.AssetEntry e)
     {
         var root = new GameObject(e.prefab.name);
-        root.transform.SetParent(transform, false);
+        root.transform.SetParent(Holder, false);
         var inst = Instantiate(e.prefab, root.transform);
         inst.transform.localPosition = Vector3.zero;
         inst.transform.localRotation = Quaternion.identity;
@@ -345,10 +471,10 @@ public class TrackRoot : MonoBehaviour
     {
         foreach (var it in items)
         {
-            if (it != null) Destroy(it.gameObject);
+            if (it != null) Kill(it.gameObject);
         }
         items.Clear();
-        foreach (var c in GetComponentsInChildren<ConfettiBurst>(true)) Destroy(c.gameObject);
+        foreach (var c in GetComponentsInChildren<ConfettiBurst>(true)) Kill(c.gameObject);
 
         for (int i = 0; i < 5; i++)
         {
@@ -490,7 +616,7 @@ public class TrackRoot : MonoBehaviour
         GameObject go;
         if (entry != null) go = BuildOriented(entry);
         else if (kind == BeltKind.Coin) go = BuildCoin(prefab);
-        else go = Instantiate(prefab, transform);
+        else go = Instantiate(prefab, Holder);
         var it = go.AddComponent<BeltItem>();
         it.kind = kind;
         it.x = x;
@@ -525,7 +651,7 @@ public class TrackRoot : MonoBehaviour
     GameObject BuildCoin(GameObject prefab)
     {
         var holder = new GameObject("Moeda");
-        holder.transform.SetParent(transform, false);
+        holder.transform.SetParent(Holder, false);
         holder.transform.localScale = Vector3.one * Mathf.Max(0.01f, s.coinScale);
         var inst = Instantiate(prefab, holder.transform);
         inst.transform.localPosition = Vector3.zero;
@@ -792,7 +918,7 @@ public class TrackRoot : MonoBehaviour
     // Limites da esteira em planta (5 pistas, verde) e caminho dos itens (amarelo, do ponto onde nascem até a Lu).
     void RefreshLimits()
     {
-        if (limitsObj != null) Destroy(limitsObj);
+        if (limitsObj != null) Kill(limitsObj);
         limitsObj = null;
         if (!showBoxes || s == null) return;
         limitsObj = new GameObject("LimitesTeste");
@@ -827,11 +953,11 @@ public class TrackRoot : MonoBehaviour
         FinishSpawned = true;
 
         GameObject go;
-        if (level.finishLinePrefab != null) go = Instantiate(level.finishLinePrefab, transform);
+        if (level.finishLinePrefab != null) go = Instantiate(level.finishLinePrefab, Holder);
         else
         {
             go = new GameObject("Chegada");
-            go.transform.SetParent(transform, false);
+            go.transform.SetParent(Holder, false);
         }
         var it = go.AddComponent<BeltItem>();
         it.kind = BeltKind.Finish;

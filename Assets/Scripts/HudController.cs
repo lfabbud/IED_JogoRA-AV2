@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 // HUD da partida: vidas, moedas, cronômetro (com alerta na reta final), mensagem central, botões
 // (esquerda, direita, pular, pause).
-public class HudController : MonoBehaviour
+public class HudController : MonoBehaviour, IPhasePreview
 {
     public GameObject controlsRoot;
     public Button leftButton;
@@ -39,6 +39,20 @@ public class HudController : MonoBehaviour
         if (jumpButton) jumpButton.onClick.AddListener(() => { if (JumpPressed != null) JumpPressed(); });
         if (pauseButton) pauseButton.onClick.AddListener(() => { if (PausePressed != null) PausePressed(); });
     }
+
+    // Pré-visualização na Scene: vidas cheias, 12 moedas e o tempo total da partida.
+    public void ApplyPreview(LevelConfig level)
+    {
+        if (Application.isPlaying) return;
+        var st = PhasePreview.Settings();
+        if (st == null) return;
+        ConfigureTimer(st);
+        SetLives(st.startingLives);
+        SetCoins(12);
+        SetTimer(st.runDurationSeconds);
+    }
+
+    public void ClearPreview() { }
 
     public void SetControlsVisible(bool visible)
     {

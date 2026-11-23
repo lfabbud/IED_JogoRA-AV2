@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Cena 1: tela de apresentação com "Jogar" (vai ao scanner) e "Fases" (lista das fases).
-public class MenuController : MonoBehaviour
+public class MenuController : MonoBehaviour, IPhasePreview
 {
     public LevelCatalog catalog;
     public LevelThemeApplier theme;
@@ -49,6 +49,34 @@ public class MenuController : MonoBehaviour
             ui.Show(mainScreen);
         }
     }
+
+    // Pré-visualização na Scene: os quadros da lista de fases (com o progresso salvo). A tela de fases continua como está na Hierarchy.
+    public void ApplyPreview(LevelConfig level)
+    {
+        if (Application.isPlaying) return;
+        if (slotsContainer == null || slotPrefab == null || catalog == null || catalog.levels == null) return;
+        ClearPreview();
+        foreach (var l in catalog.levels)
+        {
+            if (l == null) continue;
+            var slot = Instantiate(slotPrefab, slotsContainer);
+            slot.gameObject.name = PreviewPrefix + l.displayName;
+            PhasePreview.MarkTemporary(slot.gameObject);
+            slot.Setup(l, null);
+        }
+    }
+
+    public void ClearPreview()
+    {
+        if (Application.isPlaying || slotsContainer == null) return;
+        for (int i = slotsContainer.childCount - 1; i >= 0; i--)
+        {
+            var c = slotsContainer.GetChild(i).gameObject;
+            if (c.name.StartsWith(PreviewPrefix)) DestroyImmediate(c);
+        }
+    }
+
+    const string PreviewPrefix = "[Pré-visualização] ";
 
     void OpenPhases()
     {

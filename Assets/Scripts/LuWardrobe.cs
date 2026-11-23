@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Fica no LuModelo. Pinta a meia, o short e o boné da Lu com as cores da fase (Level Config > Roupas da Lu).
 // Cada peça aponta para os Renderers (e, se quiser, um material específico) que ela pinta.
-public class LuWardrobe : MonoBehaviour
+public class LuWardrobe : MonoBehaviour, IPhasePreview
 {
     [System.Serializable]
     public class Part
@@ -76,6 +76,28 @@ public class LuWardrobe : MonoBehaviour
             }
         }
         return false;
+    }
+
+    // Pré-visualização na Scene: as cores ficam só na tela (não são gravadas na cena nem no prefab).
+    public void ApplyPreview(LevelConfig level)
+    {
+        if (Application.isPlaying) return;
+        ApplyLevel(level);
+    }
+
+    public void ClearPreview()
+    {
+        if (Application.isPlaying || parts == null) return;
+        foreach (var part in parts)
+        {
+            if (part == null || part.renderers == null) continue;
+            foreach (var r in part.renderers)
+            {
+                if (r != null) r.SetPropertyBlock(null);
+            }
+        }
+        applied = null;
+        hasApplied = null;
     }
 
     // Pinta as peças com as cores da fase: Element 0 = meia, Element 1 = short, Element 2 = boné.

@@ -52,7 +52,8 @@ public class LevelConfig : ScriptableObject
     [TextArea] public string introText = "";
     [TextArea] public string rewardMessage = "Parabéns! Você ganhou {desconto}% de desconto em {marca}.";
     [TextArea] public string couponMessage = "Apresente este QR Code e ganhe {desconto}% de desconto em {marca}.";
-    [TextArea] public string noRewardMessage = "Você coletou {moedas} moedas. Tente de novo para ganhar um desconto!";
+    [TextArea] public string scannerUnlockedMessage = "Fase {marca} desbloqueada!";
+    [TextArea] public string scannerRevisitMessage = "Fase {marca}";
 
     [Header("Cores")]
     public Color themeColor = new Color(0.08f, 0.08f, 0.12f, 1f);
@@ -64,16 +65,16 @@ public class LevelConfig : ScriptableObject
     public Color panelColor = Color.white;
     [Tooltip("Cor das letras (títulos e textos) sobre o fundo da fase.")]
     public Color textColor = Color.white;
-    [Tooltip("Cores PRIMÁRIAS (você define). Cada obstáculo instanciado nas pistas do meio (1 a 3) recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
+    [Tooltip("Cores PRIMÁRIAS (você define). Cada obstáculo e cada objeto de cenário instanciado, em qualquer das 5 pistas, recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
     [UnityEngine.Serialization.FormerlySerializedAs("palette")]
     public Color[] primaryPalette;
-    [Tooltip("Cores SECUNDÁRIAS (você define). Cada objeto de cenário instanciado nas pistas das laterais (0 e 4) recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
+    [Tooltip("Cores SECUNDÁRIAS (você define). Não são mais usadas nas peças das pistas (todas usam a paleta primária); só entram no sorteio das cores dos confetes.")]
     public Color[] secondaryPalette;
 
-    // Paleta de uma peça: pistas das laterais = secundária; pistas do meio = primária.
+    // Paleta de uma peça: as 5 pistas (meio e laterais) usam a primária. O parâmetro é mantido só por compatibilidade.
     public Color[] PaletteFor(bool edgeLane)
     {
-        return edgeLane ? secondaryPalette : primaryPalette;
+        return primaryPalette;
     }
 
     // Confetes: sorteiam entre as duas paletas.

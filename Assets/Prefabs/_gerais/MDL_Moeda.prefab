@@ -68,6 +68,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 37da5c5119d4b4f5893d64da7501b55b, type: 2}
+    - target: {fileID: -1954656171835388034, guid: d8c82dc2e51fc4bd184e0b09eef00e10, type: 3}
+      propertyPath: m_Name
+      value: Coroa
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d8c82dc2e51fc4bd184e0b09eef00e10, type: 3}
       propertyPath: m_Name
       value: MDL_Moeda
@@ -76,6 +80,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 37da5c5119d4b4f5893d64da7501b55b, type: 2}
+    - target: {fileID: 7966000689984997936, guid: d8c82dc2e51fc4bd184e0b09eef00e10, type: 3}
+      propertyPath: m_Name
+      value: Cara
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

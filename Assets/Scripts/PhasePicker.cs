@@ -6,7 +6,7 @@ using UnityEngine.UI;
 // Lista de fases dentro do jogo (criada inteiramente por script, nada a montar na cena). Abre por cima de tudo e, ao tocar
 // numa fase, avisa o RunnerGame, que troca a fase sem escanear de novo. Mostra as fases já liberadas; com
 // GameSettings.testUnlockAllLevels marcado, mostra todas (as bloqueadas aparecem marcadas).
-public class PhasePicker : MonoBehaviour
+public class PhasePicker : MonoBehaviour, IPhasePreview
 {
     public event Action<LevelConfig> Chosen;
 
@@ -76,8 +76,33 @@ public class PhasePicker : MonoBehaviour
 
     public void Close()
     {
-        if (root != null) Destroy(root);
+        if (root != null)
+        {
+            if (Application.isPlaying) Destroy(root);
+            else DestroyImmediate(root);
+        }
         root = null;
+    }
+
+    // A lista cobre a tela inteira, então ela não acompanha o seletor de fase: só abre pelo botão "Mostrar a lista de fases".
+    public void ApplyPreview(LevelConfig level) { }
+
+    public void ShowPreview(LevelConfig level)
+    {
+        if (Application.isPlaying) return;
+        Open(PhasePreview.Catalog(), true, level);
+        if (root != null) PhasePreview.MarkTemporary(root);
+    }
+
+    public void ClearPreview()
+    {
+        if (Application.isPlaying) return;
+        Close();
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            var c = transform.GetChild(i).gameObject;
+            if (c.name == "SeletorDeFases") DestroyImmediate(c);
+        }
     }
 
     static void AddText(Transform parent, string text, float size, float height)
@@ -86,6 +111,7 @@ public class PhasePicker : MonoBehaviour
         go.transform.SetParent(parent, false);
         go.GetComponent<LayoutElement>().preferredHeight = height;
         var t = go.AddComponent<TextMeshProUGUI>();
+        if (LevelThemeApplier.ButtonFont != null) t.font = LevelThemeApplier.ButtonFont;
         t.text = text;
         t.fontSize = size;
         t.alignment = TextAlignmentOptions.Center;
@@ -107,6 +133,7 @@ public class PhasePicker : MonoBehaviour
         var tgo = new GameObject("Texto", typeof(RectTransform));
         tgo.transform.SetParent(go.transform, false);
         var t = tgo.AddComponent<TextMeshProUGUI>();
+        if (LevelThemeApplier.ButtonFont != null) t.font = LevelThemeApplier.ButtonFont;
         t.text = label;
         t.fontSize = 40f;
         t.alignment = TextAlignmentOptions.Center;
