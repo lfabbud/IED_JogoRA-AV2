@@ -37,9 +37,27 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
     readonly int[] coinBusyUntil = new int[5];
     // Deslocamento de cada pista (0 a 4) ao longo do percurso, sorteado no início de cada jogo (GameSettings.lateralMisalignment).
     readonly float[] laneShift = new float[5];
+    // Registros do que já foi criado, na medida do percurso (módulo + posição sorteada). Servem para nenhum obstáculo
+    // ficar alinhado com outro, nenhuma moeda ficar alinhada com outra e moeda e obstáculo não se sobreporem na mesma pista.
+    struct ObstacleRec { public float key; public int c0, c1, along; }
+    struct CoinRec { public float key; public int col; }
+    readonly List<ObstacleRec> obstacleRecs = new List<ObstacleRec>();
+    readonly List<CoinRec> coinRecs = new List<CoinRec>();
+    // Por pista (0 a 4): quantos obstáculos foram criados em outras pistas desde o último obstáculo desta pista.
+    readonly int[] laneSince = new int[5];
     int jumpShiftCol = 2;
 
     float L;
+    float maxAssetHeight = 2f;
+    int coinHeightPick = -1;
+    // Altura da base do asset que está sendo criado (0 = piso). O espaço em altura do asset é o limite menos esta base.
+    float planBaseY = 0f;
+    // Asset no ar só nasce se couber reduzido a no mínimo esta fração do tamanho que teria no piso; senão fica no piso.
+    const float minAirScale = 0.6f;
+    // Asset no ar ocupa no máximo esta quantidade de pistas na largura, para sempre sobrar passagem pelas laterais.
+    const int maxAirAcross = 2;
+    // Altura máxima usada de fato: o vão até o PainelTopo menos a folga (Max Height Margin Percent).
+    float UsableHeight { get { return maxAssetHeight * (1f - Mathf.Clamp(s.maxHeightMarginPercent, 0f, 50f) * 0.01f); } }
     float flatEnd;
     float arc;
     float fadeLen;
@@ -49,6 +67,7 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
     int lastObstacleEnd;
     int lastEscape = -1;
     int jumpCol0, jumpWidth, jumpModule;
+    float jumpRel;
 
     int coinsSpawned;
     int coinIdx;
@@ -127,10 +146,12 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
             foreach (var e in level.assets)
             {
                 if (e == null || e.prefab == null) continue;
+                hasPlan = false;
+                planBaseY = 0f;
                 if (z > flatEnd - L) break;
                 int col = 1 + (n % 3);
-                int along = Mathf.Max(1, e.cellsAlong);
-                SpawnItem(e.prefab, BeltKind.Obstacle, (col - 2) * w, 0f, arc + flatEnd - z, along * L * 0.5f, e.canBeJumped, e);
+                int along = Mathf.Max(1, Along(e));
+                SpawnItem(e.prefab, BeltKind.Obstacle, (col - 2) * w, 0f, arc + flatEnd - z, along * L * 0.5f, false, e);
                 rowDepth = Mathf.Max(rowDepth, along);
                 if (n % 3 == 2)
                 {
@@ -181,6 +202,10 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         arc = Mathf.PI * 0.5f * curveR;
         fadeLen = Mathf.Max(0.01f, s.fadeCells * L);
         travel = L;
+        maxAssetHeight = Mathf.Max(0.05f, s.fallbackMaxAssetHeight);
+        autoSizeCache.Clear();
+        autoLogged.Clear();
+        hasPlan = false;
 
         float nearZ = -(0.5f * L + fadeLen);
         float length = flatEnd - nearZ;
@@ -217,7 +242,10 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         }
 
         // Moedas: cada uma nasce num instante sorteado entre o início e o fim da corrida (frequência e posição aleatórias).
-        for (int i = 0; i < 5; i++) laneShift[i] = Random.value * Mathf.Clamp01(s.lateralMisalignment) * L;
+        for (int i = 0; i < 5; i++) laneShift[i] = 0f;
+        coinRecs.Clear();
+        obstacleRecs.Clear();
+        ResetLaneSince();
         coinIdx = 0;
         coinTimes.Clear();
         float t0 = s.coinStartDelaySeconds;
@@ -260,6 +288,16 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
             if (flatEnd < 1f) Warn("belt-end", "Esteira " + level.displayName + ": o PontoFundo está muito perto da Lu; confira a posição dele no modelo.");
         }
         PaintBeltParts(bt);
+
+        // Altura máxima dos assets = vão entre a superfície da esteira (PontoLu, altura 0) e a parte mais baixa do PainelTopo.
+        Transform painel = FindDeep(bt, "PainelTopo");
+        Bounds pb;
+        if (painel != null && BeltItem.LocalBounds(transform, painel, out pb) && pb.min.y > 0.05f)
+        {
+            maxAssetHeight = pb.min.y;
+            if (Application.isPlaying) Debug.Log("[Lu] Altura máxima dos assets: vão até o PainelTopo " + maxAssetHeight.ToString("0.00") + ", com a folga " + UsableHeight.ToString("0.00") + ".");
+        }
+        else Warn("belt-panel", "Esteira " + level.displayName + ": não consegui medir o PainelTopo; a altura máxima dos assets é Fallback Max Asset Height (" + maxAssetHeight.ToString("0.00") + ").");
 
         Transform fita = FindDeep(bt, "Fita");
         if (fita == null)
@@ -384,9 +422,103 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
     }
 
     // Largura reservada para o asset, em unidades locais: de 1 a 3 pistas (cenário das pontas: 1 pista).
+    // ---------- espaço reservado (Cells): manual ou automático (Auto Cells) ----------
+
+    // Auto Cells: o código escala o modelo por igual (para cima ou para baixo) até caber justo na caixa máxima e conta
+    // as casas que ficaram preenchidas. O plano (orientação, escala e casas) é sorteado uma vez por asset criado.
+    struct AutoPlan { public LevelConfig.AssetEntry entry; public Quaternion q; public float scale; public int across, along; }
+    AutoPlan plan;
+    bool hasPlan;
+    int lastAcross = 1, lastAlong = 1;
+    readonly Dictionary<LevelConfig.AssetEntry, Vector3> autoSizeCache = new Dictionary<LevelConfig.AssetEntry, Vector3>();
+    readonly HashSet<LevelConfig.AssetEntry> autoLogged = new HashSet<LevelConfig.AssetEntry>();
+
+    // Tamanho do modelo (largura, altura, comprimento) na orientação do prefab (com a rotação e a escala da raiz).
+    bool MeasureModel(LevelConfig.AssetEntry e, out Vector3 size)
+    {
+        if (!autoSizeCache.TryGetValue(e, out size))
+        {
+            size = Vector3.zero;
+            if (e.prefab != null)
+            {
+                var root = new GameObject("MedirAsset");
+                root.SetActive(false);
+                root.transform.SetParent(transform, false);
+                // A rotação e a escala da raiz do prefab são mantidas: o tamanho medido já é o do asset na posição em que você o deixou no prefab.
+                var inst = Instantiate(e.prefab, root.transform);
+                inst.transform.localPosition = Vector3.zero;
+                Bounds b;
+                if (BeltItem.LocalBounds(root.transform, inst.transform, out b)) size = b.size;
+                if (Application.isPlaying) Destroy(root); else DestroyImmediate(root);
+            }
+            autoSizeCache[e] = size;
+        }
+        return size.x > 0.0001f && size.y > 0.0001f && size.z > 0.0001f;
+    }
+
+    void EnsurePlan(LevelConfig.AssetEntry e)
+    {
+        if (!hasPlan || plan.entry != e) PlanAuto(e);
+    }
+
+    void PlanAuto(LevelConfig.AssetEntry e)
+    {
+        hasPlan = true;
+        int maxA = Mathf.Clamp(e.cellsAcross, 1, 3);
+        if (planBaseY > 0.001f) maxA = Mathf.Min(maxA, maxAirAcross);
+        int maxB = Mathf.Clamp(e.cellsAlong, 1, 3);
+        plan = new AutoPlan { entry = e, q = Quaternion.identity, scale = 1f, across = maxA, along = maxB };
+        Vector3 size;
+        if (!MeasureModel(e, out size)) return;
+
+        Vector3 box = new Vector3(maxA * s.laneWidth, Mathf.Max(0.05f, UsableHeight - planBaseY), maxB * L);
+        const float tol = 0.05f;
+        bool consider = e.randomRotation || e.lockFloor || e.lockFront;
+        var all = Rotations24();
+        int n = consider ? all.Length : 1;
+        var cands = new List<AutoPlan>();
+        for (int i = 0; i < n; i++)
+        {
+            var q = all[i];
+            if (e.lockFloor && Vector3.Dot(q * FaceVector(e.floorFace), Vector3.down) < 0.99f) continue;
+            if (e.lockFront && Vector3.Dot(q * FaceVector(e.frontFace), Vector3.back) < 0.99f) continue;
+            Vector3 sz = RotatedSize(q, size);
+            // Maior escala uniforme que ainda cabe na caixa máxima: a medida que bate no limite encosta nele.
+            float f = Mathf.Min(box.x / sz.x, Mathf.Min(box.y / sz.y, box.z / sz.z));
+            int a = Mathf.Clamp(Mathf.CeilToInt(sz.x * f / s.laneWidth - tol), 1, maxA);
+            int b = Mathf.Clamp(Mathf.CeilToInt(sz.z * f / L - tol), 1, maxB);
+            b = Mathf.Min(maxB, Mathf.Max(b, a));
+            cands.Add(new AutoPlan { entry = e, q = q, scale = f, across = a, along = b });
+        }
+        if (cands.Count == 0) return;
+        plan = cands[e.randomRotation ? Random.Range(0, cands.Count) : 0];
+        if (autoLogged.Add(e) && Application.isPlaying)
+            Debug.Log("[Lu] Auto Cells " + (e.prefab != null ? e.prefab.name : "?") + ": modelo " + size.x.ToString("0.00") + " x " + size.y.ToString("0.00") + " x " + size.z.ToString("0.00") +
+                ", caixa máxima " + box.x.ToString("0.00") + " x " + box.y.ToString("0.00") + " x " + box.z.ToString("0.00") + " => escala " + plan.scale.ToString("0.00") +
+                ", Across " + plan.across + ", Along " + plan.along + ".");
+    }
+
+    int Across(LevelConfig.AssetEntry e)
+    {
+        if (!e.autoCells)
+        {
+            int a = Mathf.Clamp(e.cellsAcross, 1, 3);
+            return planBaseY > 0.001f ? Mathf.Min(a, maxAirAcross) : a;
+        }
+        EnsurePlan(e);
+        return plan.across;
+    }
+
+    int Along(LevelConfig.AssetEntry e)
+    {
+        if (!e.autoCells) return Mathf.Max(1, e.cellsAlong);
+        EnsurePlan(e);
+        return plan.along;
+    }
+
     float AssetWidth(LevelConfig.AssetEntry e)
     {
-        int across = Mathf.Clamp(e.cellsAcross, 1, 3);
+        int across = Mathf.Clamp(Across(e), 1, 3);
         return across * s.laneWidth;
     }
 
@@ -397,8 +529,8 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
     {
         var dom = new Vector3(
             AssetWidth(e),
-            Mathf.Clamp(e.cellsHigh, 1, 3) * s.CellHeight,
-            Mathf.Max(1, e.cellsAlong) * L);
+            Mathf.Max(0.05f, UsableHeight - planBaseY),
+            Mathf.Max(1, Along(e)) * L);
         const float eps = 0.02f;
         bool consider = e.randomRotation || e.lockFloor || e.lockFront;
         var all = Rotations24();
@@ -415,8 +547,7 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
             if (e.lockFront && Vector3.Dot(q * FaceVector(e.frontFace), Vector3.back) < 0.99f) continue;
             Vector3 sz = RotatedSize(q, size);
             float f = sz.x > dom.x ? dom.x / sz.x : 1f;
-            float capH = s.maxHeightFactor * Mathf.Max(dom.x, Mathf.Max(dom.y, dom.z));
-            if (s.maxHeightFactor > 0f && sz.y * f > capH) f = capH / sz.y;
+            if (sz.y * f > dom.y) f = dom.y / sz.y;
             if (!haveLockOnly) { lockOnly = q; lockOnlyScale = f; haveLockOnly = true; }
             if (sz.y * f <= dom.y + eps && sz.z * f <= dom.z + eps)
             {
@@ -434,10 +565,9 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         string nm = e.prefab != null ? e.prefab.name : "?";
         Warn("fit-" + nm, "Asset " + nm + ": não cabe no espaço reservado (" + dom.x.ToString("0.00") + " x " + dom.y.ToString("0.00") + " x " + dom.z.ToString("0.00") +
             ") com as travas escolhidas; o modelo mede " + size.x.ToString("0.00") + " x " + size.y.ToString("0.00") + " x " + size.z.ToString("0.00") +
-            ". A largura é reduzida para caber nas pistas e a altura para no máximo " + s.maxHeightFactor.ToString("0.#") + "x a maior medida da caixa; ajuste as caixas ou o modelo.");
+            ". A largura é reduzida para caber nas pistas e a altura para no máximo " + UsableHeight.ToString("0.00") + " (vão até o PainelTopo menos a folga); ajuste as caixas ou o modelo.");
         float fb = size.x > dom.x ? dom.x / size.x : 1f;
-        float capB = s.maxHeightFactor * Mathf.Max(dom.x, Mathf.Max(dom.y, dom.z));
-        if (s.maxHeightFactor > 0f && size.y * fb > capB) fb = capB / size.y;
+        if (size.y * fb > dom.y) fb = dom.y / size.y;
         scale = haveLockOnly ? lockOnlyScale : fb;
         return haveLockOnly ? lockOnly : Quaternion.identity;
     }
@@ -449,21 +579,66 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         var root = new GameObject(e.prefab.name);
         root.transform.SetParent(Holder, false);
         var inst = Instantiate(e.prefab, root.transform);
+        // O pivô (gizmo de posição) do prefab é o ponto de referência: ele fica no centro das casas, no piso, e o asset gira e escala em torno dele.
+        // A rotação e a escala da raiz do prefab são mantidas (baseRot). As travas, o sorteio de orientação e o Auto Cells giram o asset por cima delas.
         inst.transform.localPosition = Vector3.zero;
-        inst.transform.localRotation = Quaternion.identity;
+        Quaternion baseRot = inst.transform.localRotation;
         Bounds b;
-        if (!BeltItem.LocalBounds(root.transform, inst.transform, out b)) return root;
+        if (!BeltItem.LocalBounds(root.transform, inst.transform, out b)) { hasPlan = false; return root; }
+        Quaternion q;
         float f;
-        Quaternion q = PickRotation(e, b.size, out f);
-        if (f < 0.9999f) inst.transform.localScale = inst.transform.localScale * f;
-        if (q != Quaternion.identity)
+        if (e.autoCells)
         {
-            Vector3 c = q * b.center;
-            Vector3 sz = RotatedSize(q, b.size);
-            inst.transform.localRotation = q;
-            inst.transform.localPosition = new Vector3(-c.x, sz.y * 0.5f - c.y, -c.z) * f;
+            // Auto Cells: orientação, escala (para cima ou para baixo) e casas vêm do plano sorteado para este asset.
+            EnsurePlan(e);
+            q = plan.q;
+            f = plan.scale;
+            lastAcross = plan.across;
+            lastAlong = plan.along;
+            hasPlan = false;
+        }
+        else
+        {
+            lastAcross = Mathf.Clamp(Across(e), 1, 3);
+            lastAlong = Mathf.Max(1, Along(e));
+            q = PickRotation(e, b.size, out f);
+        }
+        if (f < 0.9999f || e.autoCells) inst.transform.localScale = inst.transform.localScale * f;
+        inst.transform.localRotation = q * baseRot;
+        // Posição: o pivô fica na origem (centro das casas). Só a altura é corrigida quando a orientação muda: o ponto mais baixo do asset
+        // fica onde estava no prefab (se o pivô está na base, o asset gira e continua apoiado no piso).
+        float minY0 = b.center.y - b.size.y * 0.5f;
+        Vector3 cq = q * b.center;
+        Vector3 sq = RotatedSize(q, b.size);
+        float minYq = cq.y - sq.y * 0.5f;
+        inst.transform.localPosition = new Vector3(0f, (minY0 - minYq) * f, 0f);
+
+        // Limite: o pivô manda, mas se o asset ficou (mesmo em parte) fora da caixa reservada, ele é deslocado para dentro (sem escalar).
+        // Largura e comprimento: dentro das casas (origem = centro das casas). Altura: ponto mais baixo no piso ou acima, topo até o limite.
+        Bounds nb;
+        if (BeltItem.LocalBounds(root.transform, inst.transform, out nb))
+        {
+            float halfW = Mathf.Clamp(lastAcross, 1, 3) * s.laneWidth * 0.5f;
+            float halfD = Mathf.Max(1, lastAlong) * L * 0.5f;
+            float avail = Mathf.Max(0.05f, UsableHeight - planBaseY);
+            Vector3 shift = Vector3.zero;
+            shift.x = ShiftInto(nb.min.x, nb.max.x, -halfW, halfW);
+            shift.z = ShiftInto(nb.min.z, nb.max.z, -halfD, halfD);
+            if (nb.min.y < 0f) shift.y = -nb.min.y;
+            else if (nb.max.y > avail) shift.y = -Mathf.Min(nb.max.y - avail, nb.min.y);
+            if (shift != Vector3.zero) inst.transform.localPosition += shift;
         }
         return root;
+    }
+
+    // Deslocamento mínimo para o trecho [lo, hi] caber em [boxLo, boxHi]. Se o trecho for maior que a caixa, centraliza.
+    static float ShiftInto(float lo, float hi, float boxLo, float boxHi)
+    {
+        const float tol = 0.001f;
+        if (hi - lo > boxHi - boxLo) return (boxLo + boxHi) * 0.5f - (lo + hi) * 0.5f;
+        if (lo < boxLo - tol) return boxLo - lo;
+        if (hi > boxHi + tol) return boxHi - hi;
+        return 0f;
     }
 
     // Apaga tudo e volta ao estado inicial (usado ao tentar de novo, sem mexer na posição da esteira).
@@ -488,6 +663,11 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         lastEscape = -1;
         jumpModule = -1000;
         coinsSpawned = 0;
+        coinHeightPick = -1;
+        planBaseY = 0f;
+        coinRecs.Clear();
+        obstacleRecs.Clear();
+        ResetLaneSince();
         speedMul = 1f;
         stopFactor = 1f;
         decelerating = false;
@@ -625,10 +805,10 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         it.halfDepth = halfDepth;
         it.canJump = canJump;
         if (entry != null)
-            it.gizmoBox = new Vector3(AssetWidth(entry), Mathf.Clamp(entry.cellsHigh, 1, 3) * s.CellHeight, Mathf.Max(1, entry.cellsAlong) * L);
+            it.gizmoBox = new Vector3(lastAcross * s.laneWidth, Mathf.Max(0.05f, UsableHeight - planBaseY), lastAlong * L);
         it.Setup();
         if (showBoxes) it.SetBoxVisible(true);
-        if (kind == BeltKind.Obstacle || kind == BeltKind.Scenery) it.Paint(level.PaletteFor(kind == BeltKind.Scenery));
+        if (kind == BeltKind.Obstacle || kind == BeltKind.Scenery) it.Paint(level.ObjectColors());
         if (kind == BeltKind.Obstacle) it.BuildTrigger(1f - s.obstacleTolerance);
         else if (kind == BeltKind.Coin)
         {
@@ -708,6 +888,87 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
 
     // ---------- módulos ----------
 
+    void ResetLaneSince()
+    {
+        for (int i = 0; i < 5; i++) laneSince[i] = 1000;
+    }
+
+    // Escolhe a primeira pista de um obstáculo de largura w. Uma pista só recebe outro obstáculo depois que
+    // "Obstacle Lane Gap Objects" obstáculos foram criados em outras pistas. Se nenhuma posição cumpre isso
+    // (por exemplo, depois de objetos largos), usa a posição cujas pistas ficaram sem obstáculo há mais tempo.
+    int PickObstacleStart(int w)
+    {
+        int need = Mathf.Max(0, s.obstacleLaneGapObjects);
+        var best = new List<int>();
+        int bestScore = -1;
+        for (int c0 = 0; c0 + w - 1 <= 4; c0++)
+        {
+            int score = int.MaxValue;
+            for (int c = c0; c < c0 + w; c++) score = Mathf.Min(score, laneSince[c]);
+            if (score >= need) score = 100000 + 0;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best.Clear();
+            }
+            if (score == bestScore) best.Add(c0);
+        }
+        return best[Random.Range(0, best.Count)];
+    }
+
+    void MarkLanes(int c0, int c1)
+    {
+        for (int c = 0; c < 5; c++) laneSince[c] = (c >= c0 && c <= c1) ? 0 : Mathf.Min(laneSince[c] + 1, 1000);
+    }
+
+    // Posição de um módulo ao longo do percurso. Cada obstáculo e cada moeda nasce numa posição sorteada
+    // dentro do módulo (e atrás dele, se o objeto for longo); itens com o mesmo valor ficariam alinhados.
+    float ModuleKey(int m)
+    {
+        return (m + 1) * L;
+    }
+
+    // Moeda: verdadeiro se a posição fica a pelo menos "Coin Min Gap Boxes" caixas livres de qualquer outra moeda.
+    bool CoinKeyOk(float key)
+    {
+        float need = (1f + Mathf.Max(0, s.coinMinGapBoxes)) * L - 0.0001f;
+        foreach (var c in coinRecs)
+        {
+            if (Mathf.Abs(key - c.key) < need) return false;
+        }
+        return true;
+    }
+
+    // Moeda: entre a moeda e qualquer obstáculo da mesma pista sobram pelo menos "Coin Obstacle Gap Boxes" caixas livres, antes e depois.
+    bool CoinLaneClear(float key, int col)
+    {
+        float gap = Mathf.Max(0f, s.coinObstacleGapBoxes) * L;
+        foreach (var o in obstacleRecs)
+        {
+            if (col < o.c0 || col > o.c1) continue;
+            if (Mathf.Abs(key - o.key) < (o.along + 1) * 0.5f * L + gap) return false;
+        }
+        return true;
+    }
+
+    // Obstáculo: nenhum outro obstáculo na mesma linha transversal nem mais perto que "Obstacle Min Gap Boxes" caixas livres
+    // (em qualquer pista), e nenhuma moeda a menos de "Coin Obstacle Gap Boxes" caixas livres nas pistas que ele ocupa.
+    bool ObstacleClear(float key, int c0, int c1, int along)
+    {
+        float gap = Mathf.Max(0f, s.obstacleMinGapBoxes) * L;
+        float coinGap = Mathf.Max(0f, s.coinObstacleGapBoxes) * L;
+        foreach (var o in obstacleRecs)
+        {
+            if (Mathf.Abs(key - o.key) < (along + o.along) * 0.5f * L + gap) return false;
+        }
+        foreach (var c in coinRecs)
+        {
+            if (c.col < c0 || c.col > c1) continue;
+            if (Mathf.Abs(key - c.key) < (along + 1) * 0.5f * L + coinGap) return false;
+        }
+        return true;
+    }
+
     void SpawnModule(float elapsed)
     {
         int m = moduleIndex++;
@@ -746,6 +1007,26 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         return 0f;
     }
 
+    // Asset no ar: o topo nunca passa da altura limite (o espaço em altura é o limite menos a base). Se, para caber,
+    // ele precisasse ficar menor que minAirScale do tamanho que teria no piso, ele não sai do chão.
+    AssetHeight FitAirHeight(LevelConfig.AssetEntry e, AssetHeight h)
+    {
+        if (h == AssetHeight.Floor) return h;
+        float avail = UsableHeight - HeightY(h);
+        if (avail < 0.05f) return AssetHeight.Floor;
+        Vector3 size;
+        if (!MeasureModel(e, out size)) return h;
+        float fw;
+        float airWidth = Mathf.Min(Mathf.Clamp(e.cellsAcross, 1, 3), maxAirAcross) * s.laneWidth;
+        if (e.autoCells)
+            fw = Mathf.Min(airWidth / size.x, Mathf.Clamp(e.cellsAlong, 1, 3) * L / size.z);
+        else
+            fw = Mathf.Min(1f, airWidth / size.x);
+        float fFloor = Mathf.Min(fw, UsableHeight / size.y);
+        float fAir = Mathf.Min(fw, avail / size.y);
+        return fAir < minAirScale * fFloor ? AssetHeight.Floor : h;
+    }
+
     void SpawnScenery(int m, float s0)
     {
         if (edgeEntries.Count == 0) return;
@@ -754,76 +1035,70 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
             int col = side == 0 ? 0 : 4;
             if (blockedUntil[col] >= m) continue;
             if (Random.value > s.sceneryChance) continue;
+            hasPlan = false;
+            planBaseY = 0f;
             var e = edgeEntries[Random.Range(0, edgeEntries.Count)];
-            int along = Mathf.Max(1, e.cellsAlong);
+            AssetHeight sh = FitAirHeight(e, ResolveHeight(e));
+            planBaseY = HeightY(sh);
+            int along = Mathf.Max(1, Along(e));
             float sCenter = s0 - (along - 1) * 0.5f * L;
-            SpawnItem(e.prefab, BeltKind.Scenery, (col - 2) * s.laneWidth, HeightY(ResolveHeight(e)),
+            SpawnItem(e.prefab, BeltKind.Scenery, (col - 2) * s.laneWidth, HeightY(sh),
                 sCenter, along * L * 0.5f, false, e);
+            planBaseY = 0f;
             blockedUntil[col] = m + along - 1;
         }
     }
 
-    // Sempre sobra uma casa livre (de escape) em cada módulo com obstáculo, e os módulos seguintes ficam livres
-    // (casas de aterrissagem). Obstáculos baixos que ocupam as 3 casas obrigam a pular, e então a aterrissagem
-    // é garantida pelo intervalo mínimo entre obstáculos.
+    // Cada obstáculo (ou objeto largo de 2 ou 3 pistas) nasce numa pista e numa posição sorteadas dentro do módulo.
+    // Nunca fica alinhado com outro obstáculo: a distância mínima entre dois é "Obstacle Min Gap Boxes" (GameSettings).
+    // Como há no máximo um obstáculo por linha transversal, sempre sobram pistas livres para a Lu.
     void SpawnObstacles(int m, float s0)
     {
         if (obstacleEntries.Count == 0) return;
         if (m < s.startEmptyModules) return;
-        if (m - lastObstacleEnd <= s.minModulesBetweenObstacles) return;
-        if (Random.value >= s.obstacleChance) return;
+        float density = Mathf.Max(0.1f, s.obstacleDensity);
+        if (Random.value >= Mathf.Clamp01(s.obstacleChance * density)) return;
 
-        int escape = ChooseEscape(m);
-        if (escape < 0) return;
-
-        var taken = new bool[5];
-        int wanted = Random.value < s.threeObstacleChance ? 3 : (Random.value < s.twoObstacleChance ? 2 : 1);
-        int placed = 0;
-        for (int attempt = 0; attempt < 15 && placed < wanted; attempt++)
+        int tries = Mathf.Clamp(Mathf.RoundToInt(4f * density), 1, 12);
+        for (int attempt = 0; attempt < tries; attempt++)
         {
+            hasPlan = false;
+            planBaseY = 0f;
             var e = obstacleEntries[Random.Range(0, obstacleEntries.Count)];
-            int w = Mathf.Clamp(e.cellsAcross, 1, 3);
-            int along = Mathf.Max(1, e.cellsAlong);
-            AssetHeight h = ResolveHeight(e);
+            AssetHeight h = FitAirHeight(e, ResolveHeight(e));
+            planBaseY = HeightY(h);
+            int w = Mathf.Clamp(Across(e), 1, 3);
+            int along = Mathf.Max(1, Along(e));
             bool ground = h == AssetHeight.Floor;
-            if (ground && w == 3 && !e.canBeJumped) continue;
 
-            var starts = new List<int>();
-            for (int c0 = 0; c0 + w - 1 <= 4; c0++)
-            {
-                bool ok = true;
-                for (int c = c0; c < c0 + w; c++)
-                {
-                    // Nada de moeda no piso na caixa logo antes do obstáculo (coinBusyUntil >= m - 1).
-                    if (taken[c] || blockedUntil[c] >= m || coinBusyUntil[c] >= m - 1) ok = false;
-                    if (ground && w < 3 && c == escape) ok = false;
-                }
-                if (ok) starts.Add(c0);
-            }
-            if (starts.Count == 0) continue;
+            float rel = (along - 1) * 0.5f * L + Random.value * L;
+            float key = ModuleKey(m) + rel;
+            int start = PickObstacleStart(w);
+            int c1 = start + w - 1;
+            if (!ObstacleClear(key, start, c1, along)) continue;
 
-            int start = starts[Random.Range(0, starts.Count)];
             float center = start + (w - 1) * 0.5f;
-            float sCenter = s0 - (along - 1) * 0.5f * L;
-            SpawnItem(e.prefab, BeltKind.Obstacle, (center - 2f) * s.laneWidth, HeightY(h), sCenter,
-                along * L * 0.5f, e.canBeJumped, e, Mathf.Clamp(Mathf.RoundToInt(center), 0, 4));
-
-            for (int c = start; c < start + w; c++)
-            {
-                taken[c] = true;
-                blockedUntil[c] = m + along - 1;
-            }
-            lastObstacleEnd = Mathf.Max(lastObstacleEnd, m + along - 1);
-            if (ground && e.canBeJumped)
+            var spawned = SpawnItem(e.prefab, BeltKind.Obstacle, (center - 2f) * s.laneWidth, HeightY(h), s0 - rel,
+                along * L * 0.5f, false, e, Mathf.Clamp(Mathf.RoundToInt(center), 0, 4));
+            // Moeda em cima do obstáculo só se o modelo (já reduzido) não passa do pico do pulo da Lu.
+            bool lowEnough = false;
+            Bounds hb;
+            if (spawned != null && BeltItem.LocalBounds(spawned.transform, spawned.transform, out hb)) lowEnough = hb.max.y <= s.JumpPeak;
+            planBaseY = 0f;
+            if (spawned != null) spawned.canJump = lowEnough;
+            obstacleRecs.Add(new ObstacleRec { key = key, c0 = start, c1 = c1, along = along });
+            MarkLanes(start, c1);
+            if (obstacleRecs.Count > 24) obstacleRecs.RemoveAt(0);
+            lastObstacleEnd = m + along - 1;
+            if (ground && lowEnough)
             {
                 jumpCol0 = start;
                 jumpWidth = w;
                 jumpModule = m;
-                jumpShiftCol = Mathf.Clamp(Mathf.RoundToInt(center), 0, 4);
+                jumpRel = rel;
             }
-            placed++;
+            return;
         }
-        if (placed > 0) lastEscape = escape;
     }
 
     int ChooseEscape(int m)
@@ -841,9 +1116,10 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         return pool[Random.Range(0, pool.Count)];
     }
 
-    // Moedas: uma por vez, nos instantes sorteados em Init (frequência e posição aleatórias, sem grupos). Cada moeda
-    // pode aparecer no piso ou, com Coin Hard Spot Chance, em lugar de difícil acesso (em cima de um obstáculo baixo ou
-    // suspensa na altura do pulo / do pulo duplo). Reservas por trilha evitam obstáculos em cima de moedas no piso.
+    // Moedas: uma por vez, nos instantes sorteados em Init, em posição sorteada dentro do módulo. Cada moeda
+    // pode aparecer no piso, na altura do pulo ou na do pulo duplo (proporção: Coin Ground/Jump/Double Jump Weight; a do pulo
+    // pode ficar em cima de um obstáculo baixo). Nenhuma moeda fica alinhada com outra nem a menos de
+    // "Coin Min Gap Boxes" caixas livres; se não houver lugar neste módulo, a moeda espera o seguinte.
     void SpawnCoins(int m, float s0, float elapsed)
     {
         if (level.coinPrefab == null || coinIdx >= coinTimes.Count || elapsed < coinTimes[coinIdx]) return;
@@ -851,49 +1127,63 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         float y;
         bool ground;
         bool onJump;
-        if (!PickCoinSpot(m, jumpModule == m, out col, out y, out ground, out onJump)) return;
-        SpawnItem(level.coinPrefab, BeltKind.Coin, (col - 2) * s.laneWidth, y, s0, L * 0.5f, false, null, onJump ? jumpShiftCol : -1);
-        if (ground) coinBusyUntil[col] = Mathf.Max(coinBusyUntil[col], m);
+        float rel;
+        if (!PickCoinSpot(m, jumpModule == m, out col, out y, out ground, out onJump, out rel)) return;
+        SpawnItem(level.coinPrefab, BeltKind.Coin, (col - 2) * s.laneWidth, y, s0 - rel, L * 0.5f, false, null, col);
+        coinRecs.Add(new CoinRec { key = ModuleKey(m) + rel, col = col });
+        if (coinRecs.Count > 10) coinRecs.RemoveAt(0);
         coinIdx++;
         coinsSpawned++;
     }
 
-    bool PickCoinSpot(int mi, bool overJumpObstacle, out int col, out float y, out bool ground, out bool onJump)
+    // A altura da moeda é sorteada primeiro, pelos pesos do GameSettings (chão, pulo, pulo duplo), e fica a mesma até a moeda
+    // nascer: se não houver pista livre neste módulo, a moeda espera o seguinte, sem cair para o chão.
+    bool PickCoinSpot(int mi, bool overJumpObstacle, out int col, out float y, out bool ground, out bool onJump, out float rel)
     {
         onJump = false;
         col = -1;
         y = s.coinHeight;
         ground = false;
-        if (Random.value < s.coinHardSpotChance && s.allowSuspendedAssets)
+        rel = Random.value * L;
+
+        if (coinHeightPick < 0)
         {
-            if (overJumpObstacle)
-            {
-                col = jumpCol0 + Random.Range(0, jumpWidth);
-                y = s.CoinHeightJump;
-                onJump = true;
-                return true;
-            }
-            int c = PickCoinLane(mi);
-            if (c >= 0)
-            {
-                col = c;
-                y = (s.doubleJumpEnabled && Random.value < 0.5f) ? s.CoinHeightDoubleJump : s.CoinHeightJump;
-                return true;
-            }
+            float wg = Mathf.Max(0f, s.coinGroundWeight);
+            float wj = s.allowSuspendedAssets ? Mathf.Max(0f, s.coinJumpWeight) : 0f;
+            float wd = s.allowSuspendedAssets && s.doubleJumpEnabled ? Mathf.Max(0f, s.coinDoubleJumpWeight) : 0f;
+            if (wg + wj + wd <= 0f) wg = 1f;
+            float r = Random.value * (wg + wj + wd);
+            coinHeightPick = r < wg ? 0 : (r < wg + wj ? 1 : 2);
         }
-        col = PickCoinLane(mi);
+
+        if (coinHeightPick == 1 && overJumpObstacle && CoinKeyOk(ModuleKey(mi) + jumpRel))
+        {
+            col = jumpCol0 + Random.Range(0, jumpWidth);
+            y = s.CoinHeightJump;
+            onJump = true;
+            rel = jumpRel;
+            coinHeightPick = -1;
+            return true;
+        }
+
+        col = PickCoinLane(mi, rel);
         if (col < 0) return false;
-        ground = true;
+        if (coinHeightPick == 1) y = s.CoinHeightJump;
+        else if (coinHeightPick == 2) y = s.CoinHeightDoubleJump;
+        else ground = true;
+        coinHeightPick = -1;
         return true;
     }
 
-    // Trilha livre (0 a 4) no módulo mi, sorteada. -1 = nenhuma.
-    int PickCoinLane(int mi)
+    // Trilha livre (0 a 4) para uma moeda na posição sorteada do módulo mi. -1 = nenhuma.
+    int PickCoinLane(int mi, float rel)
     {
+        float key = ModuleKey(mi) + rel;
+        if (!CoinKeyOk(key)) return -1;
         var free = new List<int>();
         for (int c = 0; c <= 4; c++)
         {
-            if (blockedUntil[c] >= mi || coinBusyUntil[c] >= mi) continue;
+            if (!CoinLaneClear(key, c)) continue;
             free.Add(c);
         }
         return free.Count == 0 ? -1 : free[Random.Range(0, free.Count)];
@@ -1018,6 +1308,6 @@ public class TrackRoot : MonoBehaviour, IPhasePreview
         go.transform.SetParent(transform, false);
         var burst = go.AddComponent<ConfettiBurst>();
         Vector3 origin = (lu != null ? lu.transform.localPosition : Vector3.zero) + new Vector3(0f, 2.6f, 0f);
-        burst.Play(origin, colors, s.confettiCount, s.confettiSize, s.confettiSeconds);
+        burst.Play(origin, colors, s.confettiCount, s.confettiSize, s.confettiSeconds, 0.6f, true, s.confettiFloorHeight);
     }
 }

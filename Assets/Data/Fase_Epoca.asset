@@ -27,9 +27,10 @@ MonoBehaviour:
   themeColor: {r: 0.84313726, g: 0.39607844, b: 0.54509807, a: 1}
   accentColor: {r: 0.9764706, g: 0.83137256, b: 0.8901961, a: 1}
   trackColor: {r: 0.8156863, g: 0.60784316, b: 0.972549, a: 1}
-  bodyColor: {r: 0.84313726, g: 0.39607844, b: 0.54509807, a: 1}
+  bodyColor: {r: 0.827451, g: 0.06666667, b: 0.36078432, a: 1}
   panelColor: {r: 0.95686275, g: 0.6901961, b: 0.7921569, a: 1}
   textColor: {r: 1, g: 1, b: 1, a: 1}
+  paletteForObjects: 3
   primaryPalette:
   - {r: 0.9764706, g: 0.83137256, b: 0.8901961, a: 0}
   - {r: 0.95686275, g: 0.6901961, b: 0.7921569, a: 0}
@@ -46,205 +47,192 @@ MonoBehaviour:
   shortsColor: {r: 0.56078434, g: 0.41960785, b: 0.70980394, a: 1}
   socksColor: {r: 0.9764706, g: 0.83137256, b: 0.8901961, a: 1}
   beltPrefab: {fileID: 7759517147088737932, guid: 5722535e271f748d99f6c781e1547a7c, type: 3}
-  productPrefab: {fileID: 0}
+  productPrefab: {fileID: 5649511587855748694, guid: 42194a786628a455c9e8f69444255cbb, type: 3}
+  productViewScale: 1.07
   coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 2548172821796378333, guid: be806ccefbff94ee894006366113a227, type: 3}
-  vortexPrefab: {fileID: 0}
+  vortexPrefab: {fileID: 3482662841115411388, guid: 8aa4028b273014c2497a6bf62a284c6a, type: 3}
   posterUnlockPrefab: {fileID: 0}
   assets:
-  - prefab: {fileID: 919132149155446097, guid: 383eeeb82a330448796a23a2783fcb81, type: 3}
+  - prefab: {fileID: 7056787747350603038, guid: bfec9100d533c4378ad86f926420b569, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 8638130746671119679, guid: bac9a95555108450581cc08dabcb2cda, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 6996611990928220599, guid: b5af558dbeafc479b99bb87d64ad9880, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
     lockFloor: 0
     floorFace: 0
     lockFront: 0
     frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 588745198db8441ea8be0cef6e344fd6, type: 3}
+  - prefab: {fileID: 3490934060415301153, guid: 26251db5ceafc4a11a9ae303169fe0a6, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 4868719845038549829, guid: 6b9323702d2b040ffb7246e3091bbb67, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 3317175871705077386, guid: f892bba9452f749cb8178b200e4254d4, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 3
+    cellsAlong: 3
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
     lockFloor: 0
     floorFace: 0
     lockFront: 0
     frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: c10409c4aac5a43f1b2da8ee05083271, type: 3}
+  - prefab: {fileID: 9193396637744636784, guid: 9ed205f58981647a9bc8bef6b4b6badc, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 1894017494036698926, guid: be84e90a6220845eea32bc5afb611d16, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 880434241044450667, guid: dc70640f54ba947a2b3a84d912a7a782, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 1057338246116491586, guid: d047096306bf34317a1feb3ab89378bf, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 1296296792938203173, guid: 3b8a74474f59d444c8c43cab15eccb07, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 0
+  - prefab: {fileID: 2048537086037236275, guid: 29e4df20a92dd4cb5bce66b13a6fea42, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
     lockFloor: 0
     floorFace: 0
     lockFront: 0
     frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 0676b32103dc341ea8eaa6db5e973dad, type: 3}
+  - prefab: {fileID: 4243520706767368550, guid: 21e976d7fafb5481fa5977aaeab8769d, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
+    autoCells: 1
+    cellsAcross: 3
+    cellsAlong: 3
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
     lockFloor: 0
     floorFace: 0
     lockFront: 0
     frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: cf33c98f786a546d0ae12ea24255d554, type: 3}
+  - prefab: {fileID: 601401855748894165, guid: d537cd363fc994ff79e00be1e69f8ae0, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 0430bbeb3353b42f7b3084c8e8c822cd, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 9f4bb2fc303c947a88f5b684b6625f4b, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 6a090583551c94ac48cdc44a536a5f8b, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 7280ba9dd71b04e168237b85fd4d6982, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 0f3d1d8a91cd542afa3bc9ef87df80f6, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: b5505d3037e8c4b4983fae422a4dc3a1, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 6b586d39c653442c5bcf4a5483100f0a, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 29b81df7f25ff45a8b45dea4aa1c951b, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: c956e73a42f56404e9fc0c09acaf6a60, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 0

@@ -41,12 +41,27 @@ public class RunnerGame : MonoBehaviour
     [Tooltip("Opcional: botão de trocar de fase na tela de pause.")]
     public Button pausePhasesButton;
     public Button placementReviewButton;
-    public TMP_Text placementHint;
+
+    [Header("Textos da tela (um objeto de texto para cada mensagem)")]
+    [Tooltip("Tela de posicionar, enquanto procura uma superfície.")]
+    public GameObject textSearching;
+    [Tooltip("Tela de posicionar, quando a superfície foi encontrada (e também no teste na tela).")]
+    public GameObject textFound;
+    [Tooltip("HUD, com a Lu aquecendo, antes da contagem.")]
+    public GameObject textReady;
+    [Tooltip("HUD, um objeto para cada passo da contagem, na ordem em que aparecem (3, 2, 1). Cada um fica 1 s na tela.")]
+    public GameObject[] textCountdown;
+    [Tooltip("HUD, quando a contagem termina e a corrida começa.")]
+    public GameObject textGo;
 
     [Header("Tela de posicionar: área da base da esteira")]
     public Graphic footprintImage;
     public Color footprintIdle = new Color(1f, 1f, 1f, 0.55f);
     public Color footprintReady = new Color(0.4f, 1f, 0.5f, 0.9f);
+    [Tooltip("Sem superfície, a área pisca entre Footprint Blink Min Alpha e Footprint Blink Max Alpha. Segundos de cada subida e de cada descida (1,5 = ciclo completo de 3 s).")]
+    public float footprintBlinkSeconds = 1.5f;
+    [Range(0f, 1f)] public float footprintBlinkMinAlpha = 0.4f;
+    [Range(0f, 1f)] public float footprintBlinkMaxAlpha = 0.8f;
 
     State state;
     LevelConfig level;
@@ -57,6 +72,7 @@ public class RunnerGame : MonoBehaviour
     // Moedas já contadas nesta partida: cada moeda soma uma vez só, mesmo que o contato seja avisado mais de uma vez.
     readonly HashSet<BeltItem> countedCoins = new HashSet<BeltItem>();
     bool stepsOn;
+    bool surfaceWasFound;
     int lastHitIndex = -1;
     PhasePicker picker;
     ShowBoxesToggle boxesToggle;
@@ -90,9 +106,10 @@ public class RunnerGame : MonoBehaviour
 
         // Cópia dos dados: valores alterados em jogo valem só para esta cópia, nunca para o asset do projeto.
         settings = Instantiate(catalog.settings);
-        Sfx.Volume = settings.sfxVolume;
-        Sfx.HookButtons(settings.sfxButton, hud != null && hud.controlsRoot != null ? hud.controlsRoot.transform : null);
-        MusicPlayer.Play(settings.musicGame, settings.musicVolume, settings.musicFadeInSeconds, settings.musicFadeOutSeconds);
+        Sfx.Volume = settings.soundVolumes.masterGeral;
+        ShowText(null);
+        Sfx.HookButtons(settings.sfxButton, hud != null && hud.controlsRoot != null ? hud.controlsRoot.transform : null, settings.soundVolumes.button);
+        MusicPlayer.Play(settings.musicGame, settings.soundVolumes.masterGeral * settings.soundVolumes.music, settings.musicFadeInSeconds, settings.musicFadeOutSeconds);
 
         theme.Apply(level);
 
@@ -184,6 +201,7 @@ public class RunnerGame : MonoBehaviour
         // Aterrissagem: a esteira cai sobre o marcador. O ARAnchor só entra depois da queda, para o AR não brigar com a animação.
         landing = go.GetComponent<TrackLanding>();
         if (landing == null) landing = go.AddComponent<TrackLanding>();
+        landing.impactVolume = settings.soundVolumes.impact;
         bool wantAnchor = settings.useAnchor && !settings.testOnScreen;
         if (wantAnchor && !landing.enableLanding) go.AddComponent<ARAnchor>();
         anchorAfterLanding = wantAnchor && landing.enableLanding;
@@ -193,7 +211,7 @@ public class RunnerGame : MonoBehaviour
         lu = track.lu;
         lu.Jumped += OnJumped;
         lu.DoubleJumped += OnDoubleJumped;
-        lu.LaneChanged += dir => Sfx.Play(dir < 0 ? settings.sfxLaneLeft : settings.sfxLaneRight);
+        lu.LaneChanged += dir => Sfx.Play(dir < 0 ? settings.sfxLaneLeft : settings.sfxLaneRight, dir < 0 ? settings.soundVolumes.laneLeft : settings.soundVolumes.laneRight);
         lu.ObstacleTouched += OnObstacleTouched;
         lu.CoinTouched += OnCoinTouched;
         luRenderers = lu.GetComponentsInChildren<Renderer>(true);
@@ -224,7 +242,7 @@ public class RunnerGame : MonoBehaviour
     {
         state = State.Landing;
         placeButton.interactable = false;
-        if (placementHint) placementHint.text = "";
+        ShowText(null);
 
         Vector3 ground = track.transform.position;
         landing.Begin(ground);
@@ -273,30 +291,49 @@ public class RunnerGame : MonoBehaviour
         hud.SetLives(lives);
         hud.SetCoins(0);
         hud.SetTimer(settings.runDurationSeconds);
-        hud.SetCenter(settings.readyMessage);
+        ShowText(textReady);
 
         readyTimer = 0f;
         state = State.Ready;
     }
 
+    // Liga só o objeto de texto indicado (null = nenhum). Em edição todos ficam ligados; só em jogo o código liga e desliga.
+    void ShowText(GameObject on)
+    {
+        SetTextActive(textSearching, on);
+        SetTextActive(textFound, on);
+        SetTextActive(textReady, on);
+        SetTextActive(textGo, on);
+        if (textCountdown != null)
+            foreach (var t in textCountdown) SetTextActive(t, on);
+    }
+
+    static void SetTextActive(GameObject t, GameObject on)
+    {
+        if (t == null) return;
+        bool want = t == on;
+        if (t.activeSelf != want) t.SetActive(want);
+    }
+
     IEnumerator CountdownRoutine()
     {
         state = State.Countdown;
-        hud.SetCenter("");
+        ShowText(null);
 
         PlayState("Preparo");
         // Com um som único da contagem (Sfx Countdown), ele toca uma vez junto com o primeiro número e não há bips.
         bool wholeSound = settings.sfxCountdown != null;
-        if (wholeSound) Sfx.Play(settings.sfxCountdown);
-        for (int i = settings.countdownFrom; i > 0; i--)
+        if (wholeSound) Sfx.Play(settings.sfxCountdown, settings.soundVolumes.countdown);
+        int steps = textCountdown != null ? textCountdown.Length : 0;
+        for (int i = 0; i < steps; i++)
         {
-            hud.SetCenter(CountdownText(i));
-            if (!wholeSound) Sfx.Play(settings.sfxBeep);
+            ShowText(textCountdown[i]);
+            if (!wholeSound) Sfx.Play(settings.sfxBeep, settings.soundVolumes.beep);
             yield return new WaitForSeconds(1f);
         }
 
-        hud.SetCenter(settings.goMessage);
-        Sfx.Play(settings.sfxStartSiren);
+        ShowText(textGo);
+        Sfx.Play(settings.sfxStartSiren, settings.soundVolumes.startSiren);
         PlayState("Correr");
         hud.SetControlsVisible(true);
         lu.CanControl = true;
@@ -305,22 +342,45 @@ public class RunnerGame : MonoBehaviour
         StartSteps();
 
         yield return new WaitForSeconds(0.7f);
-        if (state == State.Running) hud.SetCenter("");
+        if (state == State.Running) ShowText(null);
     }
 
     void Update()
     {
+        if (state != State.Placing)
+        {
+            surfaceWasFound = false;
+            SetTextActive(textSearching, null);
+            SetTextActive(textFound, null);
+        }
+
         // O checkbox "Show boxes" só aparece antes de a corrida começar.
         if (boxesToggle != null) boxesToggle.SetVisible(state == State.Intro || state == State.Placing || state == State.Ready);
 
         if (state == State.Placing)
         {
-            placeButton.interactable = placer.HasPose;
-            if (placementHint)
-                placementHint.text = placer.HasPose
-                    ? (settings.testOnScreen ? settings.placementTestMessage : settings.placementFoundMessage)
-                    : settings.placementSearchingMessage;
-            if (footprintImage) footprintImage.color = placer.HasPose ? footprintReady : footprintIdle;
+            bool found = placer.HasPose;
+            placeButton.interactable = found;
+            ShowPlacementText(found || settings.testOnScreen ? textFound : textSearching);
+            if (footprintImage)
+            {
+                if (found)
+                {
+                    // Superfície encontrada: cor integral (100% de opacidade).
+                    footprintImage.color = new Color(footprintReady.r, footprintReady.g, footprintReady.b, 1f);
+                }
+                else
+                {
+                    // Sem superfície: pisca devagar entre o mínimo e o máximo de opacidade.
+                    float half = Mathf.Max(0.05f, footprintBlinkSeconds);
+                    float k = Mathf.SmoothStep(0f, 1f, Mathf.PingPong(Time.unscaledTime / half, 1f));
+                    var c = footprintIdle;
+                    c.a = Mathf.Lerp(footprintBlinkMinAlpha, footprintBlinkMaxAlpha, k);
+                    footprintImage.color = c;
+                }
+            }
+            if (found && !surfaceWasFound) Sfx.Play(settings.sfxSurfaceFound, settings.soundVolumes.surfaceFound);
+            surfaceWasFound = found;
         }
         else if (state == State.Ready)
         {
@@ -390,7 +450,7 @@ public class RunnerGame : MonoBehaviour
         if (alert && sec != lastAlertSecond)
         {
             lastAlertSecond = sec;
-            Sfx.Play(settings.sfxEndAlert);
+            Sfx.Play(settings.sfxEndAlert, settings.soundVolumes.endAlert);
         }
     }
 
@@ -410,7 +470,7 @@ public class RunnerGame : MonoBehaviour
         coins++;
         hud.SetCoins(coins);
         hud.PulseCoins();
-        Sfx.Play(settings.sfxCoin);
+        Sfx.Play(settings.sfxCoin, settings.soundVolumes.coin);
     }
 
     void OnHit()
@@ -421,13 +481,13 @@ public class RunnerGame : MonoBehaviour
 
         if (lives <= 0)
         {
-            Sfx.Play(PickHitSound());
+            Sfx.Play(PickHitSound(), settings.soundVolumes.hits);
             StartCoroutine(Lose());
             return;
         }
         invincibleLeft = settings.invincibleSeconds;
-        Sfx.Play(PickHitSound());
-        Sfx.PlayFor(settings.sfxDizzy, settings.invincibleSeconds);
+        Sfx.Play(PickHitSound(), settings.soundVolumes.hits);
+        Sfx.PlayFor(settings.sfxDizzy, settings.invincibleSeconds, settings.soundVolumes.dizzy);
         PlayState("Esbarrar", true);
         hitAnimLeft = settings.hitAnimationSeconds;
         StartCoroutine(HitEffect());
@@ -438,7 +498,10 @@ public class RunnerGame : MonoBehaviour
     {
         DestroyVortex();
         if (level.vortexPrefab != null && track.headAnchor != null)
+        {
             vortex = Instantiate(level.vortexPrefab, track.headAnchor);
+            PaintVortex(vortex);
+        }
 
         float t = 0f;
         float blink = 0f;
@@ -486,6 +549,45 @@ public class RunnerGame : MonoBehaviour
         return Mathf.Lerp(square, smooth, Mathf.Clamp01(settings.blinkSmoothness));
     }
 
+    // Cada elemento do redemoinho (cada passarinho) recebe, ao acaso, uma das 3 cores da roupa da Lu da fase (Level Config > Roupas da Lu).
+    // Os elementos são os filhos do primeiro nível do prefab que tem mais de um filho; sem filhos, o prefab inteiro é um elemento só.
+    // As 3 cores são sorteadas em ordem embaralhada: com 3 passarinhos, cada um fica com uma cor diferente.
+    void PaintVortex(GameObject root)
+    {
+        if (root == null || level == null) return;
+        Color[] cores = { level.socksColor, level.shortsColor, level.capColor };
+
+        Transform nivel = root.transform;
+        while (nivel.childCount == 1) nivel = nivel.GetChild(0);
+        var elementos = new List<Transform>();
+        if (nivel.childCount == 0) elementos.Add(nivel);
+        else foreach (Transform filho in nivel) elementos.Add(filho);
+
+        var baralho = new List<Color>();
+        var bloco = new MaterialPropertyBlock();
+        var idCor = Shader.PropertyToID("_BaseColor");
+        foreach (var el in elementos)
+        {
+            if (baralho.Count == 0)
+            {
+                baralho.AddRange(cores);
+                for (int i = baralho.Count - 1; i > 0; i--)
+                {
+                    int j = Random.Range(0, i + 1);
+                    var tmp = baralho[i]; baralho[i] = baralho[j]; baralho[j] = tmp;
+                }
+            }
+            Color c = baralho[baralho.Count - 1];
+            baralho.RemoveAt(baralho.Count - 1);
+            foreach (var r in el.GetComponentsInChildren<Renderer>(true))
+            {
+                r.GetPropertyBlock(bloco);
+                bloco.SetColor(idCor, c);
+                r.SetPropertyBlock(bloco);
+            }
+        }
+    }
+
     void DestroyVortex()
     {
         if (vortex != null) Destroy(vortex);
@@ -509,7 +611,8 @@ public class RunnerGame : MonoBehaviour
         Sfx.StopTimed();
         hud.SetTimerAlert(false);
         hud.SetControlsVisible(false);
-        Sfx.Play(settings.sfxLose);
+        ShowText(null);
+        Sfx.Play(settings.sfxLose, settings.soundVolumes.lose);
         StopSteps();
         yield return new WaitForSeconds(settings.gameOverDelaySeconds);
 
@@ -530,9 +633,10 @@ public class RunnerGame : MonoBehaviour
         StopSteps();
         hud.SetTimerAlert(false);
         hud.SetControlsVisible(false);
+        ShowText(null);
         PlayState("Comemorar");
-        Sfx.Play(settings.sfxVictoryTheme);
-        track.PlayConfetti(level.AllColors());
+        Sfx.Play(settings.sfxVictoryTheme, settings.soundVolumes.victoryTheme);
+        track.PlayConfetti(level.ConfettiColors());
         yield return new WaitForSeconds(settings.celebrationSeconds);
 
         SaveSystem.SaveResult(level, coins, true);
@@ -541,11 +645,11 @@ public class RunnerGame : MonoBehaviour
 
     // ---------- textos e passadas ----------
 
-    // Texto de cada passo da contagem: o {n} vira o número da vez.
-    string CountdownText(int n)
+    // Tela de posicionar: liga só o texto indicado entre "procurando" e "encontrada".
+    void ShowPlacementText(GameObject on)
     {
-        string template = string.IsNullOrEmpty(settings.countdownMessage) ? "{n}" : settings.countdownMessage;
-        return template.Replace("{n}", n.ToString());
+        SetTextActive(textSearching, on);
+        SetTextActive(textFound, on);
     }
 
     // Sorteia um dos sons de batida preenchidos, sem repetir o anterior (se houver mais de um).
@@ -567,7 +671,7 @@ public class RunnerGame : MonoBehaviour
     void StartSteps()
     {
         stepsOn = true;
-        Sfx.StartSteps(settings.sfxFootsteps, settings.footstepsVolume);
+        Sfx.StartSteps(settings.sfxFootsteps, settings.soundVolumes.footsteps);
     }
 
     void StopSteps()
@@ -582,14 +686,14 @@ public class RunnerGame : MonoBehaviour
     {
         PlayState("Pular");
         jumpAnimActive = true;
-        Sfx.Play(settings.sfxJump);
+        Sfx.Play(settings.sfxJump, settings.soundVolumes.jump);
     }
 
     void OnDoubleJumped()
     {
         PlayState("PularDuplo", true);
         jumpAnimActive = true;
-        Sfx.Play(settings.sfxJump);
+        Sfx.Play(settings.sfxJump, settings.soundVolumes.jump);
     }
 
     // Estados opcionais (PularDuplo, Esbarrar): se não existirem no Animator, nada acontece.

@@ -25,7 +25,8 @@ public class TrackLanding : MonoBehaviour
     [Header("Som de impacto")]
     [Tooltip("Vazio: usa um som gerado por código (senoides curtas, no estilo dos outros sons).")]
     public AudioClip impactSound;
-    [Range(0f, 1f)] public float impactVolume = 1f;
+    // O volume vem do GameSettings (Sound Volumes > Impact); o RunnerGame o define ao posicionar a esteira.
+    [HideInInspector] public float impactVolume = 1f;
 
     [Header("Poeira")]
     public bool dust = true;

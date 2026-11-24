@@ -55,7 +55,13 @@ public class ResultScreen : MonoBehaviour, IPhasePreview
     // As telas continuam desativadas; ative a que quiser ver na Hierarchy.
     public void ApplyPreview(LevelConfig lvl)
     {
-        if (Application.isPlaying || lvl == null) return;
+        if (Application.isPlaying) return;
+        if (lvl == null)
+        {
+            if (productDisplay != null) productDisplay.ClearPreview();
+            return;
+        }
+        if (productDisplay != null) productDisplay.ShowPreview(lvl.productPrefab, lvl.productViewScale);
         var st = PhasePreview.Settings();
         int pct = 0;
         int c = 0;
@@ -71,7 +77,10 @@ public class ResultScreen : MonoBehaviour, IPhasePreview
         LevelThemeApplier.SetText(gameObject.scene, "CouponMessage", lvl.Format(lvl.couponMessage, c, pct));
     }
 
-    public void ClearPreview() { }
+    public void ClearPreview()
+    {
+        if (productDisplay != null) productDisplay.ClearPreview();
+    }
 
     public void ShowGameOver(LevelConfig levelConfig, int collectedCoins)
     {
@@ -92,7 +101,7 @@ public class ResultScreen : MonoBehaviour, IPhasePreview
         LevelThemeApplier.SetText(gameObject.scene, "RewardMessage", level.Format(level.rewardMessage, coins, hasReward ? tier.percent : 0));
         if (productGroup) productGroup.SetActive(hasReward);
         couponButton.gameObject.SetActive(hasReward);
-        if (hasReward && productDisplay != null) productDisplay.Show(level.productPrefab);
+        if (hasReward && productDisplay != null) productDisplay.Show(level.productPrefab, level.productViewScale);
 
         ui.Show(victoryScreen);
     }

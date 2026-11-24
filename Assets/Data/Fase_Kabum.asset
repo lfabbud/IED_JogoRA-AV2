@@ -24,12 +24,13 @@ MonoBehaviour:
     produto <b>{marca}</b>."
   scannerUnlockedMessage: "O jogo da {marca} \nfoi desbloqueado!"
   scannerRevisitMessage: Jogo da {marca}
-  themeColor: {r: 0.85490197, g: 0.35686275, b: 0.18431373, a: 1}
+  themeColor: {r: 0.30588236, g: 0.42745098, b: 0.6509804, a: 1}
   accentColor: {r: 1, g: 1, b: 1, a: 1}
-  trackColor: {r: 0.46666667, g: 0.6431373, b: 0.8980392, a: 1}
-  bodyColor: {r: 0.85490197, g: 0.35686275, b: 0.18431373, a: 1}
-  panelColor: {r: 0.9490196, g: 0.69411767, b: 0.627451, a: 1}
+  trackColor: {r: 0.9811321, g: 0.5400294, b: 0.38412246, a: 1}
+  bodyColor: {r: 0.30588236, g: 0.42745098, b: 0.6509804, a: 1}
+  panelColor: {r: 0.46666667, g: 0.6431373, b: 0.8980392, a: 1}
   textColor: {r: 1, g: 1, b: 1, a: 1}
+  paletteForObjects: 3
   primaryPalette:
   - {r: 0.9882353, g: 0.8235294, b: 0.7921569, a: 0}
   - {r: 0.9490196, g: 0.69411767, b: 0.627451, a: 0}
@@ -42,125 +43,118 @@ MonoBehaviour:
   - {r: 0.30588236, g: 0.42745098, b: 0.6509804, a: 0}
   - {r: 0.20392157, g: 0.28627452, b: 0.4, a: 0}
   - {r: 0.13725491, g: 0.19215687, b: 0.25882354, a: 0}
-  capColor: {r: 0.85490197, g: 0.35686275, b: 0.18431373, a: 1}
+  capColor: {r: 0.8392157, g: 0.28235295, b: 0.11372549, a: 1}
   shortsColor: {r: 0.46666667, g: 0.6431373, b: 0.8980392, a: 1}
-  socksColor: {r: 0.9490196, g: 0.69411767, b: 0.627451, a: 1}
+  socksColor: {r: 0.9882353, g: 0.8235294, b: 0.7921569, a: 1}
   beltPrefab: {fileID: 7836688497497579597, guid: 4eecde29f2075468bb24d556d00fc687, type: 3}
-  productPrefab: {fileID: 0}
+  productPrefab: {fileID: 8100341589322236730, guid: e80004d154596482eb3bc66a2db8cea9, type: 3}
+  productViewScale: 1.31
   coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 2548172821796378333, guid: be806ccefbff94ee894006366113a227, type: 3}
-  vortexPrefab: {fileID: 0}
+  vortexPrefab: {fileID: 3482662841115411388, guid: 8aa4028b273014c2497a6bf62a284c6a, type: 3}
   posterUnlockPrefab: {fileID: 0}
   assets:
   - prefab: {fileID: 919132149155446097, guid: 0e78f172515104838a8033875967cfb9, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
+    frontFace: 5
   - prefab: {fileID: 919132149155446097, guid: 755c61cc2226547e0836d62edd2e4596, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
     heightDoubleJump: 0
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
     floorFace: 0
-    lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: d8c0073070b6244399e3af0e2781dae1, type: 3}
+    lockFront: 1
+    frontFace: 5
+  - prefab: {fileID: 5494192935241017097, guid: 8480270bb64a24d9bbce6b2df121ca8b, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
-  - prefab: {fileID: 919132149155446097, guid: 1cb883526a2c143448b839ea6ed66aad, type: 3}
+    frontFace: 5
+  - prefab: {fileID: 7231184272384178061, guid: a2fc21b2e38704a54b0c8fff62f842bf, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
     heightDoubleJump: 0
     randomRotation: 0
     lockFloor: 0
     floorFace: 0
-    lockFront: 0
-    frontFace: 0
+    lockFront: 1
+    frontFace: 5
   - prefab: {fileID: 919132149155446097, guid: 5a802592406614813bf5050e7d1f8f9d, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
-    heightDoubleJump: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
+    frontFace: 5
   - prefab: {fileID: 919132149155446097, guid: 0f39392f18362425982978f43f522408, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
+    frontFace: 5
   - prefab: {fileID: 919132149155446097, guid: 8e0156a5a2af841e0a74fa07424f772f, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
+    frontFace: 5
   - prefab: {fileID: 919132149155446097, guid: 44c6f1235a47d46fcb1dd6cf77a5eef4, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 0
-    canBeJumped: 0
-    heightFloor: 0
-    heightJump: 0
+    heightFloor: 1
+    heightJump: 1
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
-    frontFace: 0
+    frontFace: 5

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Sfx : MonoBehaviour
 {
     static Sfx instance;
-    // Volume geral dos efeitos (GameSettings.sfxVolume); cada cena o define ao começar.
+    // Master Geral (GameSettings.soundVolumes.masterGeral): multiplica todos os efeitos; cada cena o define ao começar.
     public static float Volume = 1f;
     AudioSource source;
     AudioSource loopSource;
@@ -31,11 +31,13 @@ public class Sfx : MonoBehaviour
     }
 
     static AudioClip buttonClip;
+    static float buttonVolume = 1f;
 
     // Liga o som de botão em todos os Button da cena (inclusive os desativados), menos os filhos de "exclude".
-    public static void HookButtons(AudioClip clip, Transform exclude = null)
+    public static void HookButtons(AudioClip clip, Transform exclude = null, float volume = 1f)
     {
         buttonClip = clip;
+        buttonVolume = volume;
         if (clip == null) return;
         foreach (var b in Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -46,7 +48,7 @@ public class Sfx : MonoBehaviour
 
     public static void PlayButton()
     {
-        Play(buttonClip);
+        Play(buttonClip, buttonVolume);
     }
 
     public static void Play(AudioClip clip, float volume = 1f)
@@ -56,11 +58,11 @@ public class Sfx : MonoBehaviour
     }
 
     // Toca o clipe em repetição por exatamente "seconds" segundos (usado no som da tontura).
-    public static void PlayFor(AudioClip clip, float seconds)
+    public static void PlayFor(AudioClip clip, float seconds, float volume = 1f)
     {
         if (instance == null || clip == null) return;
         instance.StopTimedInternal();
-        instance.timed = instance.StartCoroutine(instance.TimedRoutine(clip, seconds));
+        instance.timed = instance.StartCoroutine(instance.TimedRoutine(clip, seconds, volume));
     }
 
     // Passadas: toca o clipe em repetição, desde o começo, até StopSteps.
@@ -91,10 +93,10 @@ public class Sfx : MonoBehaviour
         if (loopSource != null) loopSource.Stop();
     }
 
-    IEnumerator TimedRoutine(AudioClip clip, float seconds)
+    IEnumerator TimedRoutine(AudioClip clip, float seconds, float volume)
     {
         loopSource.clip = clip;
-        loopSource.volume = Volume;
+        loopSource.volume = volume * Volume;
         loopSource.Play();
         yield return new WaitForSeconds(seconds);
         loopSource.Stop();

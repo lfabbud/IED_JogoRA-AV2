@@ -26,10 +26,11 @@ MonoBehaviour:
   scannerRevisitMessage: Jogo da {marca}
   themeColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
   accentColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
-  trackColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
-  bodyColor: {r: 0.023529412, g: 0.5176471, b: 0.42352942, a: 1}
-  panelColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
+  trackColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
+  bodyColor: {r: 0.023529412, g: 0.31764707, b: 0.25882354, a: 1}
+  panelColor: {r: 0.19607843, g: 0.8784314, b: 0.7490196, a: 1}
   textColor: {r: 1, g: 1, b: 1, a: 1}
+  paletteForObjects: 3
   primaryPalette:
   - {r: 0.88235295, g: 0.9764706, b: 0.95686275, a: 0}
   - {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 0}
@@ -46,9 +47,127 @@ MonoBehaviour:
   shortsColor: {r: 0.023529412, g: 0.5176471, b: 0.42352942, a: 1}
   socksColor: {r: 0.7647059, g: 0.95686275, b: 0.92156863, a: 1}
   beltPrefab: {fileID: 5210373044277725308, guid: 6f9e5b42d9b634b45b8c081682cf1583, type: 3}
-  productPrefab: {fileID: 0}
+  productPrefab: {fileID: 1994959714044597872, guid: c4b3e8d99a6d544a08e97aacdfdbe7f2, type: 3}
+  productViewScale: 1.47
   coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 2548172821796378333, guid: be806ccefbff94ee894006366113a227, type: 3}
-  vortexPrefab: {fileID: 0}
+  vortexPrefab: {fileID: 3482662841115411388, guid: 8aa4028b273014c2497a6bf62a284c6a, type: 3}
   posterUnlockPrefab: {fileID: 0}
-  assets: []
+  assets:
+  - prefab: {fileID: 4734776107482889807, guid: 4b4d8ea0e8c71434b8d806254212467d, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 3
+    cellsAlong: 3
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
+    lockFloor: 0
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 8753678013026824615, guid: f5bab1e60f91a4370981022dd9a4d735, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 3581074738076832520, guid: 5516a12f3709a40499df025687870a59, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 3
+    cellsAlong: 3
+    heightFloor: 1
+    heightJump: 1
+    heightDoubleJump: 1
+    randomRotation: 1
+    lockFloor: 0
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 9049999079646013457, guid: 8ce0eac8ff086439aad026caba3db47d, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 3555804732291616624, guid: fb2c2cba7a7c340ac895f7b732020d83, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 611263181756531761, guid: 06ff034afe975490c8064d829fb4aff5, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 5432333388259423639, guid: 4bf1879b564884524826de3506338d71, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 7456226114009670252, guid: 1b04ff59965574d98823d41a625dd2f9, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5
+  - prefab: {fileID: 6114684106027574091, guid: c963e5e0631704e2db4cc6c34e7b7b79, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
+    heightFloor: 0
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 0
+    frontFace: 5

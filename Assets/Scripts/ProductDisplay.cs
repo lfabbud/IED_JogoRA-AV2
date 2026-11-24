@@ -8,7 +8,8 @@ public class ProductDisplay : MonoBehaviour
     public Camera productCamera;
     public Transform stage;
     public string layerName = "ProdutoUI";
-    public float spinDegreesPerSecond = 40f;
+    [Tooltip("Segundos para o produto dar uma volta completa. 0 = não gira.")]
+    [Min(0f)] public float secondsPerTurn = 9f;
     public float margin = 1.15f;
 
     GameObject current;
@@ -18,9 +19,34 @@ public class ProductDisplay : MonoBehaviour
         if (productCamera != null) productCamera.enabled = false;
     }
 
-    public void Show(GameObject prefab)
+    public void Show(GameObject prefab, float viewScale = 1f)
     {
         Clear();
+        Place(prefab, viewScale);
+    }
+
+    // Pré-visualização na Scene (sem Play): mostra o produto da fase na Render Texture. O objeto criado não é salvo na cena.
+    public void ShowPreview(GameObject prefab, float viewScale = 1f)
+    {
+        if (Application.isPlaying) return;
+        Clear();
+        Place(prefab, viewScale);
+        if (current != null)
+        {
+            PhasePreview.MarkTemporary(current);
+            productCamera.Render();
+        }
+    }
+
+    public void ClearPreview()
+    {
+        if (Application.isPlaying) return;
+        Clear();
+    }
+
+    // viewScale: maior que 1 aproxima a câmera (produto maior no quadro); menor que 1 afasta. O prefab não é alterado.
+    void Place(GameObject prefab, float viewScale)
+    {
         if (prefab == null || stage == null || productCamera == null) return;
 
         int layer = LayerMask.NameToLayer(layerName);
@@ -33,7 +59,6 @@ public class ProductDisplay : MonoBehaviour
         stage.rotation = Quaternion.identity;
         current = Instantiate(prefab, stage);
         current.transform.localPosition = Vector3.zero;
-        current.transform.localRotation = Quaternion.identity;
         foreach (var t in current.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = layer;
 
         var renderers = current.GetComponentsInChildren<Renderer>();
@@ -45,7 +70,7 @@ public class ProductDisplay : MonoBehaviour
 
             float radius = b.extents.magnitude;
             float halfFov = productCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
-            float distance = radius / Mathf.Sin(halfFov) * margin;
+            float distance = radius / Mathf.Sin(halfFov) * margin / Mathf.Max(0.1f, viewScale);
             productCamera.transform.position = stage.position - Vector3.forward * distance;
             productCamera.transform.LookAt(stage.position);
         }
@@ -54,7 +79,11 @@ public class ProductDisplay : MonoBehaviour
 
     public void Clear()
     {
-        if (current != null) Destroy(current);
+        if (current != null)
+        {
+            if (Application.isPlaying) Destroy(current);
+            else DestroyImmediate(current);
+        }
         current = null;
         if (productCamera != null) productCamera.enabled = false;
     }
@@ -62,6 +91,8 @@ public class ProductDisplay : MonoBehaviour
     void Update()
     {
         if (current != null && stage != null)
-            stage.Rotate(0f, spinDegreesPerSecond * Time.unscaledDeltaTime, 0f, Space.World);
+        {
+            if (secondsPerTurn > 0f) stage.Rotate(0f, 360f / secondsPerTurn * Time.unscaledDeltaTime, 0f, Space.World);
+        }
     }
 }

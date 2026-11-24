@@ -39,9 +39,9 @@ public class PosterScanner : MonoBehaviour, IPhasePreview
     void Start()
     {
         OrientationLayout.FollowDevice = catalog.settings != null && catalog.settings.followDeviceOrientation;
-        if (catalog.settings != null) Sfx.Volume = catalog.settings.sfxVolume;
-        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton);
-        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.musicVolume, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
+        if (catalog.settings != null) Sfx.Volume = catalog.settings.soundVolumes.masterGeral;
+        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton, null, catalog.settings.soundVolumes.button);
+        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.soundVolumes.masterGeral * catalog.settings.soundVolumes.music, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
         if (theme != null) theme.ApplyNeutral(catalog);
         imageManager.enabled = false;
         imageManager.trackablesChanged.AddListener(OnTrackablesChanged);
@@ -145,7 +145,7 @@ public class PosterScanner : MonoBehaviour, IPhasePreview
         if (firstTime)
         {
             SaveSystem.Unlock(level);
-            Sfx.Play(catalog.settings.sfxUnlock);
+            Sfx.Play(catalog.settings.sfxUnlock, catalog.settings.soundVolumes.unlock);
         }
         lastLevel = level;
         unlockedTitleText.text = level.Format(firstTime ? level.scannerUnlockedMessage : level.scannerRevisitMessage, 0, 0);

@@ -18,23 +18,8 @@ public class GameSettings : ScriptableObject
     [Header("Partida")]
     public float runDurationSeconds = 60f;
     public int startingLives = 3;
-    public int countdownFrom = 3;
     public float celebrationSeconds = 4f;
     public float gameOverDelaySeconds = 1f;
-
-    [Header("Textos de jogo")]
-    [Tooltip("Tela de posicionar, no teste na tela (sem AR).")]
-    [TextArea(1, 3)] public string placementTestMessage = "Teste na tela. Toque em Posicionar.";
-    [Tooltip("Tela de posicionar, quando a superfície foi encontrada.")]
-    [TextArea(1, 3)] public string placementFoundMessage = "Superfície encontrada. Toque em Posicionar.";
-    [Tooltip("Tela de posicionar, enquanto procura uma superfície.")]
-    [TextArea(1, 3)] public string placementSearchingMessage = "Aponte para uma superfície plana e mova o celular devagar.";
-    [Tooltip("Aparece no centro do HUD, com a Lu aquecendo, antes de a contagem começar.")]
-    [TextArea(1, 3)] public string readyMessage = "Toque na tela para começar";
-    [Tooltip("Texto de cada passo da contagem regressiva. {n} vira o número da vez (3, 2, 1). O número inicial está em Countdown From, na seção Partida.")]
-    public string countdownMessage = "{n}";
-    [Tooltip("Aparece quando a contagem termina e a corrida começa.")]
-    public string goMessage = "JÁ!";
 
     [Header("Teste")]
     [Tooltip("A lista de trocar de fase mostra todas as fases, mesmo as ainda bloqueadas. Desmarque antes do build final.")]
@@ -68,7 +53,7 @@ public class GameSettings : ScriptableObject
     public float CellHeight { get { return laneWidth * cellHeightRatio; } }
 
     [Header("Velocidade progressiva")]
-    public float speedIncreasePercent = 5f;
+    public float speedIncreasePercent = 7f;
     public float speedIncreaseEverySeconds = 15f;
     public float speedRampSeconds = 1f;
 
@@ -83,6 +68,8 @@ public class GameSettings : ScriptableObject
     public int confettiCount = 80;
     public float confettiSeconds = 3f;
     public float confettiSize = 0.15f;
+    [Tooltip("Altura do chão dos confetes, em metros, a partir do ponto onde a esteira foi posicionada. 0 = a superfície da esteira. Os confetes pousam aí e não passam para baixo.")]
+    public float confettiFloorHeight = 0f;
 
     [Header("Lu")]
     public float laneChangeSeconds = 0.12f;
@@ -109,14 +96,27 @@ public class GameSettings : ScriptableObject
 
     [Header("Módulos e obstáculos")]
     public int startEmptyModules = 6;
+    [Tooltip("Sem efeito: a distância entre obstáculos agora vem de Obstacle Min Gap Boxes.")]
     public int minModulesBetweenObstacles = 2;
     [Range(0f, 1f)] public float obstacleChance = 0.7f;
+    [Tooltip("Sem efeito: cada obstáculo nasce sozinho numa linha transversal, sem alinhar com outro.")]
     [Range(0f, 1f)] public float twoObstacleChance = 0.5f;
+    [Tooltip("Sem efeito: cada obstáculo nasce sozinho numa linha transversal, sem alinhar com outro.")]
     [Range(0f, 1f)] public float threeObstacleChance = 0.2f;
-    [Tooltip("0 = as caixas das 5 pistas ficam totalmente alinhadas lado a lado. 1 = cada pista começa o jogo com um deslocamento aleatório (até uma caixa) em relação às outras.")]
+    [Tooltip("Quantidade de obstáculos na esteira. Maior = mais obstáculos ao mesmo tempo: multiplica Obstacle Chance e o número de tentativas de posição por módulo.")]
+    [Range(0.5f, 3f)] public float obstacleDensity = 1.5f;
+    [Tooltip("Caixas livres mínimas, ao longo da esteira, entre dois obstáculos quaisquer (em qualquer pista). Nenhum obstáculo fica na mesma linha transversal de outro. Menor = mais obstáculos ao mesmo tempo.")]
+    [Min(0)] public float obstacleMinGapBoxes = 0.5f;
+    [Tooltip("Uma pista só recebe outro obstáculo depois que este número de obstáculos foi criado em outras pistas. Só vale para obstáculos (não para moedas). Se nenhuma posição cumpre a regra (por exemplo, depois de objetos largos), usa a pista que ficou sem obstáculo há mais tempo.")]
+    [Min(0)] public int obstacleLaneGapObjects = 3;
+    [Tooltip("Caixas livres mínimas, ao longo da esteira, entre uma moeda e um obstáculo da mesma pista (antes e depois). Não vale para a moeda que fica em cima de um obstáculo baixo.")]
+    [Min(0)] public float coinObstacleGapBoxes = 2f;
+    [Tooltip("Sem efeito: cada obstáculo e cada moeda nasce numa posição sorteada, sem seguir pistas com deslocamento fixo.")]
     [Range(0f, 1f)] public float lateralMisalignment = 1f;
-    [Tooltip("Altura máxima de um asset = este número x a maior medida da caixa do asset. Acima disso, ele é reduzido por igual. 0 = sem limite.")]
-    public float maxHeightFactor = 3f;
+    [Tooltip("Altura máxima de qualquer asset, em unidades. Só vale quando a esteira da fase não tem o objeto PainelTopo: com ele, o limite é a distância medida entre a superfície da esteira e a parte mais baixa do PainelTopo.")]
+    [Min(0.05f)] public float fallbackMaxAssetHeight = 2f;
+    [Tooltip("Folga abaixo do limite de altura, em % do vão até o PainelTopo. Com 10, os assets mais altos ficam 10% abaixo do painel, sem encostar nele.")]
+    [Range(0f, 50f)] public float maxHeightMarginPercent = 10f;
     [Range(0f, 1f)] public float sceneryChance = 0.5f;
     public bool allowSuspendedAssets = true;
     [Tooltip("Quanto a base de um asset suspenso invade o topo da Lu no ponto mais alto do pulo.")]
@@ -136,8 +136,16 @@ public class GameSettings : ScriptableObject
     [Tooltip("Quanto abaixo do ponto exato as moedas do pulo ficam, para facilitar pegar.")]
     public float coinReachMargin = 0f;
     public float coinStartDelaySeconds = 3f;
+    [Tooltip("Caixas livres mínimas entre duas moedas, ao longo da esteira. Nenhuma moeda fica na mesma linha transversal de outra.")]
+    [Min(0)] public int coinMinGapBoxes = 1;
     public float coinTailSeconds = 6f;
-    [Range(0f, 1f)] public float coinHardSpotChance = 0.3f;
+    [Header("Altura das moedas (proporção entre as três)")]
+    [Tooltip("Peso das moedas no chão. Cada moeda sorteia a altura por estes três pesos: com 1, 1 e 1, um terço em cada.")]
+    [Min(0f)] public float coinGroundWeight = 1f;
+    [Tooltip("Peso das moedas na altura do pulo. Só vale com Allow Suspended Assets ligado.")]
+    [Min(0f)] public float coinJumpWeight = 1f;
+    [Tooltip("Peso das moedas na altura do pulo duplo. Só vale com Allow Suspended Assets e Double Jump Enabled ligados.")]
+    [Min(0f)] public float coinDoubleJumpWeight = 1f;
     [Tooltip("Tamanho das moedas (1 = tamanho do modelo).")]
     public float coinScale = 0.9f;
 
@@ -165,15 +173,12 @@ public class GameSettings : ScriptableObject
     public AudioClip musicOpening;
     [Tooltip("Trilha de toda a cena de jogo.")]
     public AudioClip musicGame;
-    [Range(0f, 1f)] public float musicVolume = 0.6f;
     [Tooltip("Segundos para a trilha nova entrar ao mudar de cena.")]
     public float musicFadeInSeconds = 1.5f;
     [Tooltip("Segundos para a trilha anterior sumir ao mudar de cena.")]
     public float musicFadeOutSeconds = 1f;
 
     [Header("Sons")]
-    [Tooltip("Volume de todos os efeitos sonoros (0 a 1). A música tem o seu próprio volume na seção Música.")]
-    [Range(0f, 1f)] public float sfxVolume = 1f;
     [Tooltip("Toca em todo botão apertado (menu, telas do jogo, lista de fases). Os botões esquerda, direita e pular do jogo não usam este som.")]
     public AudioClip sfxButton;
     [Tooltip("Toca cada vez que a Lu troca de pista para a esquerda.")]
@@ -184,7 +189,6 @@ public class GameSettings : ScriptableObject
     public AudioClip sfxJump;
     [Tooltip("Passadas da Lu: tocam em repetição enquanto ela corre e param enquanto ela está no ar (pulo). O arquivo precisa emendar sem pausa ao repetir.")]
     public AudioClip sfxFootsteps;
-    [Range(0f, 1f)] public float footstepsVolume = 1f;
     [Tooltip("Sons de batida nos obstáculos. A cada batida toca um destes, sorteado, sem repetir o mesmo duas vezes seguidas. Sons vazios são ignorados.")]
     public AudioClip[] sfxHits = new AudioClip[3];
     [Tooltip("Toca em repetição durante o tempo de tontura e invencibilidade (som de passarinho).")]
@@ -198,6 +202,39 @@ public class GameSettings : ScriptableObject
     public AudioClip sfxVictoryTheme;
     public AudioClip sfxLose;
     public AudioClip sfxUnlock;
+    [Tooltip("Toca quando a tela de posicionar encontra uma superfície.")]
+    public AudioClip sfxSurfaceFound;
+
+    // Volume de todos os sons (0 a 1). Volume final de cada som = Master Geral x a barra do som. 1 = volume do arquivo; só dá para abaixar.
+    [System.Serializable]
+    public class SoundVolumeSet
+    {
+        [Tooltip("Abaixa todos os sons juntos, na mesma proporção (música, efeitos, passadas e aterrissagem).")]
+        [Range(0f, 1f)] public float masterGeral = 1f;
+        [Range(0f, 1f)] public float music = 0.6f;
+        [Range(0f, 1f)] public float footsteps = 1f;
+        [Tooltip("Som de aterrissagem da esteira no início do jogo.")]
+        [Range(0f, 1f)] public float impact = 1f;
+        [Range(0f, 1f)] public float button = 1f;
+        [Range(0f, 1f)] public float laneLeft = 1f;
+        [Range(0f, 1f)] public float laneRight = 1f;
+        [Range(0f, 1f)] public float coin = 1f;
+        [Range(0f, 1f)] public float jump = 1f;
+        [Tooltip("Vale para os três sons de batida.")]
+        [Range(0f, 1f)] public float hits = 1f;
+        [Range(0f, 1f)] public float dizzy = 1f;
+        [Range(0f, 1f)] public float beep = 1f;
+        [Range(0f, 1f)] public float countdown = 1f;
+        [Range(0f, 1f)] public float startSiren = 1f;
+        [Range(0f, 1f)] public float endAlert = 1f;
+        [Range(0f, 1f)] public float victoryTheme = 1f;
+        [Range(0f, 1f)] public float lose = 1f;
+        [Range(0f, 1f)] public float unlock = 1f;
+        [Range(0f, 1f)] public float surfaceFound = 1f;
+    }
+
+    [Header("Volume de cada som")]
+    public SoundVolumeSet soundVolumes = new SoundVolumeSet();
 
     // Devolve a maior faixa alcançada, ou null se nenhuma foi alcançada.
     public DiscountTier GetTier(int coins)

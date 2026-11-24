@@ -4,6 +4,11 @@ using UnityEngine;
 // Altura em que um asset aparece na esteira: encostado no piso ou suspenso na altura do pulo normal / do pulo duplo.
 public enum AssetHeight { Floor, Jump, DoubleJump }
 
+// Paleta usada pelos objetos instanciados na esteira (escolhida em cada fase).
+// Primary: só a primária. Secondary: só a secundária.
+// BothSeparate: as duas, cada objeto usa uma delas inteira (sorteada). BothMixed: as duas misturadas dentro de cada objeto.
+public enum ObjectPalette { Primary, Secondary, BothSeparate, BothMixed }
+
 // Faces do modelo 3D (eixos locais do prefab). Usadas nas travas de rotação.
 public enum AssetFace { Down, Up, Left, Right, Back, Front }
 
@@ -21,12 +26,12 @@ public class LevelConfig : ScriptableObject
         public GameObject prefab;
         [Tooltip("Suspenso: no momento todas as 5 trilhas são jogáveis e este campo não tem efeito.")]
         public bool onlyEdgeLanes = false;
+        [Tooltip("Marcado: o código escala o modelo por igual, para cima ou para baixo, até caber justo na caixa máxima (Cells Across x Cells Along x altura até o PainelTopo menos a folga) e ocupa só as casas que sobrarem preenchidas. Cells Across e Cells Along viram o máximo de casas. Desmarcado: o modelo mantém o tamanho (só é reduzido se passar) e Cells Across e Along são o espaço reservado.")]
+        public bool autoCells = false;
+        [Tooltip("Largura: quantas pistas, de 1 a 3. Com Auto Cells, é o máximo que o asset pode preencher.")]
         [Range(1, 3)] public int cellsAcross = 1;
+        [Tooltip("Comprimento: quantos módulos, de 1 a 3. Com Auto Cells, é o máximo que o asset pode preencher.")]
         [Range(1, 3)] public int cellsAlong = 1;
-        [Tooltip("Altura do espaço reservado, em caixas (1 caixa = metade da largura de uma pista). Só serve para conferir o tamanho.")]
-        [Range(1, 3)] public int cellsHigh = 1;
-        [Tooltip("Obstáculo baixo que dá para pular. Desmarcado: Lu precisa trocar de pista.")]
-        public bool canBeJumped = true;
         [Tooltip("Alturas possíveis do asset. O sistema sorteia entre as marcadas (marque de 1 a 3). Sem nenhuma marcada, vale o piso.")]
         public bool heightFloor = true;
         public bool heightJump = false;
@@ -65,25 +70,47 @@ public class LevelConfig : ScriptableObject
     public Color panelColor = Color.white;
     [Tooltip("Cor das letras (títulos e textos) sobre o fundo da fase.")]
     public Color textColor = Color.white;
-    [Tooltip("Cores PRIMÁRIAS (você define). Cada obstáculo e cada objeto de cenário instanciado, em qualquer das 5 pistas, recebe cores sorteadas só desta lista. Vazia: mantém as cores originais do modelo.")]
+    [Tooltip("Qual paleta os objetos instanciados na esteira (obstáculos e cenário, nas 5 pistas) usam nesta fase. Primary / Secondary: só uma lista. Both Separate: as duas listas, cada objeto usa uma delas inteira (sorteada). Both Mixed: as duas listas misturadas dentro de cada objeto.")]
+    public ObjectPalette paletteForObjects = ObjectPalette.Primary;
+    [Tooltip("Cores PRIMÁRIAS (você define). Usadas pelos objetos instanciados quando 'Palette For Objects' = Primary, Both Separate ou Both Mixed. Lista vazia: os objetos mantêm as cores originais do modelo.")]
     [UnityEngine.Serialization.FormerlySerializedAs("palette")]
     public Color[] primaryPalette;
-    [Tooltip("Cores SECUNDÁRIAS (você define). Não são mais usadas nas peças das pistas (todas usam a paleta primária); só entram no sorteio das cores dos confetes.")]
+    [Tooltip("Cores SECUNDÁRIAS (você define). Usadas nos confetes e, quando 'Palette For Objects' = Secondary, Both Separate ou Both Mixed, também pelos objetos instanciados. Lista vazia nos confetes: usam a paleta primária.")]
     public Color[] secondaryPalette;
 
-    // Paleta de uma peça: as 5 pistas (meio e laterais) usam a primária. O parâmetro é mantido só por compatibilidade.
-    public Color[] PaletteFor(bool edgeLane)
+    // Cores de UM objeto instanciado na esteira (chamada uma vez por objeto), conforme 'Palette For Objects', em qualquer das 5 pistas.
+    // Both Separate: sorteia a primária ou a secundária para o objeto inteiro (se uma estiver vazia, usa a outra).
+    // Both Mixed: junta as duas listas, e as peças do objeto sorteiam entre todas as cores.
+    public Color[] ObjectColors()
     {
-        return primaryPalette;
+        bool hasP = primaryPalette != null && primaryPalette.Length > 0;
+        bool hasS = secondaryPalette != null && secondaryPalette.Length > 0;
+        switch (paletteForObjects)
+        {
+            case ObjectPalette.Secondary:
+                return secondaryPalette;
+            case ObjectPalette.BothSeparate:
+                if (hasP && hasS) return UnityEngine.Random.value < 0.5f ? primaryPalette : secondaryPalette;
+                return hasS ? secondaryPalette : primaryPalette;
+            case ObjectPalette.BothMixed:
+                if (hasP && hasS)
+                {
+                    var l = new Color[primaryPalette.Length + secondaryPalette.Length];
+                    primaryPalette.CopyTo(l, 0);
+                    secondaryPalette.CopyTo(l, primaryPalette.Length);
+                    return l;
+                }
+                return hasS ? secondaryPalette : primaryPalette;
+            default:
+                return primaryPalette;
+        }
     }
 
-    // Confetes: sorteiam entre as duas paletas.
-    public Color[] AllColors()
+    // Cores dos confetes: sempre a paleta SECUNDÁRIA (se estiver vazia, a primária).
+    public Color[] ConfettiColors()
     {
-        var l = new System.Collections.Generic.List<Color>();
-        if (primaryPalette != null) l.AddRange(primaryPalette);
-        if (secondaryPalette != null) l.AddRange(secondaryPalette);
-        return l.ToArray();
+        if (secondaryPalette != null && secondaryPalette.Length > 0) return secondaryPalette;
+        return primaryPalette;
     }
 
     [Header("Roupas da Lu")]
@@ -95,6 +122,8 @@ public class LevelConfig : ScriptableObject
     [Tooltip("Modelo 3D da esteira desta fase. Precisa de dois pontos (objetos vazios) chamados PontoLu e PontoFundo e de uma peça chamada Fita. Vazio: usa o quadro simples do prefab.")]
     public GameObject beltPrefab;
     public GameObject productPrefab;
+    [Tooltip("Tamanho do produto no quadro da tela de vitória. 1 = enquadramento padrão; maior que 1 deixa o produto maior; menor que 1 deixa menor. Não altera o prefab.")]
+    [Min(0.1f)] public float productViewScale = 1f;
     public GameObject coinPrefab;
     public GameObject finishLinePrefab;
     public GameObject vortexPrefab;

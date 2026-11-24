@@ -30,6 +30,7 @@ MonoBehaviour:
   bodyColor: {r: 0.59607846, g: 0.46666667, b: 0.78431374, a: 1}
   panelColor: {r: 0.7764706, g: 0.7176471, b: 0.8862745, a: 1}
   textColor: {r: 1, g: 1, b: 1, a: 1}
+  paletteForObjects: 3
   primaryPalette:
   - {r: 0.8784314, g: 0.83137256, b: 0.9882353, a: 0}
   - {r: 0.7764706, g: 0.7176471, b: 0.8862745, a: 0}
@@ -46,135 +47,127 @@ MonoBehaviour:
   shortsColor: {r: 0.4509804, g: 0.2784314, b: 0.7882353, a: 1}
   socksColor: {r: 0.8784314, g: 0.83137256, b: 0.9882353, a: 1}
   beltPrefab: {fileID: 6376841228121869489, guid: 56faf2bcdecba47bfbfc234f84b68586, type: 3}
-  productPrefab: {fileID: 0}
+  productPrefab: {fileID: 2081359079243621020, guid: f8b5409336e4641a2a5ddfa3a207051d, type: 3}
+  productViewScale: 1.47
   coinPrefab: {fileID: 3782827481045819102, guid: 44ccd3330edbe425ab82b03d23c5b9d5, type: 3}
   finishLinePrefab: {fileID: 2548172821796378333, guid: be806ccefbff94ee894006366113a227, type: 3}
-  vortexPrefab: {fileID: 0}
+  vortexPrefab: {fileID: 3482662841115411388, guid: 8aa4028b273014c2497a6bf62a284c6a, type: 3}
   posterUnlockPrefab: {fileID: 0}
   assets:
-  - prefab: {fileID: 919132149155446097, guid: 3713b81733b814a0dadf4d41f97c36d5, type: 3}
+  - prefab: {fileID: 1467483176016080124, guid: e289f77dadc054203b114868eaacc693, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 9f97df35e0b9546d7af75b8b4e04eff6, type: 3}
+  - prefab: {fileID: 211218836595912989, guid: 4a9a0353979634bee803957ec40d560b, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 34f3ccfc04baf44c4960a804cb259df0, type: 3}
+  - prefab: {fileID: 6246645670819420723, guid: 46ad4d27dd79e4ad28921d31170d74c6, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 7cd2fe18bb8974a7fae63ac09642d20a, type: 3}
+  - prefab: {fileID: 7718842005060131893, guid: caea089cadc5f4287abf943cf570f31d, type: 3}
     onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
+    autoCells: 1
+    cellsAcross: 2
+    cellsAlong: 2
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 1
+    frontFace: 5
+  - prefab: {fileID: 1146696887447248994, guid: c9c94232422c64dc3b670b4e60cdfcb8, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 0
+    cellsAcross: 0
+    cellsAlong: 0
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 3a58fd62e09364a309613dcffbe42582, type: 3}
+  - prefab: {fileID: 7692494422586493004, guid: 94a37e8ee79a34eba87046ce0136ad30, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 513c64752360042e6a8a03d9874e1475, type: 3}
+  - prefab: {fileID: 3890123870269535464, guid: 8370a71b49800409484adc12d8820ef9, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
     randomRotation: 0
-    lockFloor: 0
+    lockFloor: 1
+    floorFace: 0
+    lockFront: 1
+    frontFace: 5
+  - prefab: {fileID: 3736315661895224035, guid: 9dc69e78622844c38bd3528111ea8deb, type: 3}
+    onlyEdgeLanes: 0
+    autoCells: 1
+    cellsAcross: 0
+    cellsAlong: 0
+    heightFloor: 1
+    heightJump: 0
+    heightDoubleJump: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: cd8d33be5f08844ac9f89ca81da25f77, type: 3}
+  - prefab: {fileID: 5937346599034058883, guid: b241bd053b16448cdb64744ee8fb67e9, type: 3}
     onlyEdgeLanes: 0
+    autoCells: 1
     cellsAcross: 0
     cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
     heightFloor: 1
     heightJump: 0
     heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 7bb4c7ac97eee42b1b5f6f597cb68bba, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
-    heightFloor: 1
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
-    floorFace: 0
-    lockFront: 0
-    frontFace: 5
-  - prefab: {fileID: 919132149155446097, guid: 751d8149a315c418fadfc8ead21746b0, type: 3}
-    onlyEdgeLanes: 0
-    cellsAcross: 0
-    cellsAlong: 0
-    cellsHigh: 1
-    canBeJumped: 0
-    heightFloor: 1
-    heightJump: 0
-    heightDoubleJump: 0
-    randomRotation: 0
-    lockFloor: 0
+    randomRotation: 1
+    lockFloor: 1
     floorFace: 0
     lockFront: 0
     frontFace: 5

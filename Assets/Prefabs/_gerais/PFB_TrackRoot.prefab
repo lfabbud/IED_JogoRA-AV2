@@ -111,7 +111,7 @@ Transform:
   m_GameObject: {fileID: 3585659160653219719}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.33, z: 0}
+  m_LocalPosition: {x: 0, y: 1.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -127,6 +127,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1649930296561920519}
   - component: {fileID: 8121748628185765110}
+  - component: {fileID: -5843413280096035241}
   m_Layer: 0
   m_Name: PFB_TrackRoot
   m_TagString: Untagged
@@ -167,6 +168,66 @@ MonoBehaviour:
   lu: {fileID: 6019356747594761350}
   luAnimator: {fileID: 2169333987472780266}
   headAnchor: {fileID: 6713640141510151613}
+--- !u!114 &-5843413280096035241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4054588569195542078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9b1fb1b7c57443e5923311c05bebd26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableLanding: 1
+  startHeight: 1.2
+  fallSeconds: 0.9
+  delaySeconds: 0.15
+  fallCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  bounceHeight: 0.02
+  bounceSeconds: 0.25
+  impactSound: {fileID: 0}
+  impactVolume: 1
+  dust: 1
+  dustAreaWidth: 0.5
+  dustAreaLength: 0.54
+  dustCount: 40
+  dustSizeMin: 0.04
+  dustSizeMax: 0.09
+  dustGrowth: 2.2
+  dustSpeedMin: 0.2
+  dustSpeedMax: 0.5
+  dustSpreadDegrees: 25
+  dustRise: 0.1
+  dustLifeMin: 0.5
+  dustLifeMax: 0.9
+  dustColorStart: {r: 0.92, g: 0.88, b: 0.82, a: 0.7}
+  dustColorEnd: {r: 0.92, g: 0.88, b: 0.82, a: 0}
+  dustMaterial: {fileID: 0}
 --- !u!1 &7395781111777161711
 GameObject:
   m_ObjectHideFlags: 0

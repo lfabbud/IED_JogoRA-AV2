@@ -15,7 +15,6 @@ public class HudController : MonoBehaviour, IPhasePreview
     public Button pauseButton;
     public TMP_Text coinsText;
     public TMP_Text timerText;
-    public TMP_Text centerText;
     public Image[] lifeIcons;
     public Color lifeOn = Color.white;
     public Color lifeOff = new Color(1f, 1f, 1f, 0.25f);
@@ -128,10 +127,5 @@ public class HudController : MonoBehaviour, IPhasePreview
         if (!alertOn || !timerText) return;
         bool visible = Mathf.FloorToInt(Time.unscaledTime / timerBlink) % 2 == 0;
         timerText.color = new Color(timerAlert.r, timerAlert.g, timerAlert.b, visible ? 1f : 0.2f);
-    }
-
-    public void SetCenter(string text)
-    {
-        if (centerText) centerText.text = text;
     }
 }

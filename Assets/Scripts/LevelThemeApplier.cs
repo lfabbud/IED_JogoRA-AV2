@@ -19,6 +19,10 @@ public class LevelThemeApplier : MonoBehaviour, IPhasePreview
     public TextStyle infoStyle = new TextStyle();
     public TextStyle bodyStyle = new TextStyle();
 
+    [Header("Textos livres")]
+    [Tooltip("Textos desta lista ficam fora da fonte e dos estilos (Button, Info e Body): tamanho, alinhamento, estilo e fonte são os que estiverem no próprio texto. A cor só muda se o texto também estiver em Theme Texts.")]
+    public TMP_Text[] freeTexts;
+
     [System.Serializable]
     public class TextStyle
     {
@@ -137,12 +141,20 @@ public class LevelThemeApplier : MonoBehaviour, IPhasePreview
     void ApplyFonts()
     {
         ButtonFont = buttonFont;
+        var free = new System.Collections.Generic.HashSet<TMP_Text>();
+        if (freeTexts != null)
+        {
+            foreach (var f in freeTexts)
+            {
+                if (f) free.Add(f);
+            }
+        }
         var roots = gameObject.scene.GetRootGameObjects();
         foreach (var root in roots)
         {
             foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
             {
-                if (!t) continue;
+                if (!t || free.Contains(t)) continue;
                 TMP_FontAsset font;
                 TextStyle style;
                 if (t.GetComponentInParent<Button>(true) || t.GetComponentInParent<Toggle>(true)) { font = buttonFont; style = buttonStyle; }

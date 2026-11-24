@@ -14,16 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   runDurationSeconds: 60
   startingLives: 3
-  countdownFrom: 3
   celebrationSeconds: 4
   gameOverDelaySeconds: 1
-  placementTestMessage: "Ajuste a posi\xE7\xE3o do jogo em uma superf\xEDcie horizontal"
-  placementFoundMessage: "Superf\xEDcie encontrada:\ntoque no bot\xE3o para posicionar."
-  placementSearchingMessage: "Aponte para uma superf\xEDcie plana e mova seu aparelho
-    devagar"
-  readyMessage: "Toque na tela para come\xE7ar"
-  countdownMessage: '{n}'
-  goMessage: VAI!
   testUnlockAllLevels: 1
   testOnScreen: 1
   testTiltDegrees: 15
@@ -40,7 +32,7 @@ MonoBehaviour:
   beltScrollDirection: 1
   beltScrollOnU: 0
   cellHeightRatio: 0.5
-  speedIncreasePercent: 5
+  speedIncreasePercent: 6
   speedIncreaseEverySeconds: 15
   speedRampSeconds: 1
   alertSeconds: 5
@@ -48,9 +40,10 @@ MonoBehaviour:
   timerAlertColor: {r: 1, g: 0.25, b: 0.2, a: 1}
   timerBlinkInterval: 0.25
   stopDecelSeconds: 1.5
-  confettiCount: 80
-  confettiSeconds: 3
-  confettiSize: 0.15
+  confettiCount: 100
+  confettiSeconds: 30
+  confettiSize: 0.1
+  confettiFloorHeight: 0
   laneChangeSeconds: 0.12
   jumpSeconds: 0.6
   jumpHeight: 0.9
@@ -60,7 +53,7 @@ MonoBehaviour:
   luHitboxCenterY: 0.8
   obstacleTolerance: 0.15
   coinTolerance: 0.3
-  clearAheadDistance: 6
+  clearAheadDistance: -100
   invincibleSeconds: 3
   blinksPerSecond: 6
   blinkSmoothness: 1
@@ -71,8 +64,13 @@ MonoBehaviour:
   obstacleChance: 0.5
   twoObstacleChance: 0.3
   threeObstacleChance: 0.2
+  obstacleDensity: 1.1
+  obstacleMinGapBoxes: 3
+  obstacleLaneGapObjects: 3
+  coinObstacleGapBoxes: 2
   lateralMisalignment: 1
-  maxHeightFactor: 3
+  fallbackMaxAssetHeight: 2
+  maxHeightMarginPercent: 10
   sceneryChance: 0.5
   allowSuspendedAssets: 1
   suspendedOverlap: 0.3
@@ -80,8 +78,11 @@ MonoBehaviour:
   coinHeight: 0.5
   coinReachMargin: 0
   coinStartDelaySeconds: 3
+  coinMinGapBoxes: 2
   coinTailSeconds: 6
-  coinHardSpotChance: 0.3
+  coinGroundWeight: 1
+  coinJumpWeight: 1
+  coinDoubleJumpWeight: 1
   coinScale: 0.8
   coinPopSeconds: 0.1
   coinPopScale: 0.5
@@ -100,25 +101,44 @@ MonoBehaviour:
     percent: 20
   musicOpening: {fileID: 0}
   musicGame: {fileID: 8300000, guid: 5638ea9ceb8b44da8b70db269e5ef80d, type: 3}
-  musicVolume: 0.5
   musicFadeInSeconds: 0.5
   musicFadeOutSeconds: 0.5
-  sfxVolume: 0.7
   sfxButton: {fileID: 8300000, guid: bb602473a7bb0440c85bb245cc9cc802, type: 3}
   sfxLaneLeft: {fileID: 0}
   sfxLaneRight: {fileID: 0}
   sfxCoin: {fileID: 8300000, guid: 9a5a5cde07dc64e4984bf6b34f3e3429, type: 3}
   sfxJump: {fileID: 8300000, guid: cd1556f204f0e4f99bb42fac1a29e28d, type: 3}
-  sfxFootsteps: {fileID: 8300000, guid: f0f8608395d2b496997a91dc4ed2ec79, type: 3}
-  footstepsVolume: 1
+  sfxFootsteps: {fileID: 8300000, guid: 558b9cc5e55ef4f3383c38ba19b4a8a2, type: 3}
   sfxHits:
   - {fileID: 8300000, guid: 4c2b9847585304456b1c781d37345f9d, type: 3}
   - {fileID: 8300000, guid: 4349e09948c1f44e2807a6fa4d3bf91a, type: 3}
+  - {fileID: 8300000, guid: eb7e5f55bacd44a7d88095f30314cf60, type: 3}
   sfxDizzy: {fileID: 8300000, guid: 7d370437c50054e63a83e98e9bf69bbb, type: 3}
   sfxBeep: {fileID: 8300000, guid: 176b476cd438b4f71946bcb7afb5528d, type: 3}
-  sfxCountdown: {fileID: 8300000, guid: b34c5c5cda4c24397863b31ff7b94747, type: 3}
-  sfxStartSiren: {fileID: 8300000, guid: 01d82eaa0260340d290cb39cc618f26a, type: 3}
+  sfxCountdown: {fileID: 8300000, guid: 6a92cdc220fc64fd19902d10730e7a2e, type: 3}
+  sfxStartSiren: {fileID: 8300000, guid: 9ea86d01562ed407f906e6fdf79219d5, type: 3}
   sfxEndAlert: {fileID: 8300000, guid: 6950c5eb855a84ca195d4c56e06b886d, type: 3}
   sfxVictoryTheme: {fileID: 8300000, guid: 2e07c0b6b198045ba9381c197717f5a6, type: 3}
   sfxLose: {fileID: 8300000, guid: a75f99c1496db4532bec15e72e5b855f, type: 3}
   sfxUnlock: {fileID: 8300000, guid: a92c984f2c4444d7aba1e6532c7e8fe0, type: 3}
+  sfxSurfaceFound: {fileID: 8300000, guid: 16b3b28252d0b41ca98377d65efa5c2e, type: 3}
+  soundVolumes:
+    masterGeral: 0.74
+    music: 0.3
+    footsteps: 0.4
+    impact: 1
+    button: 0.78
+    laneLeft: 0.7
+    laneRight: 0.7
+    coin: 0.8
+    jump: 0.7
+    hits: 0.7
+    dizzy: 0.7
+    beep: 0.7
+    countdown: 1
+    startSiren: 0.5
+    endAlert: 1
+    victoryTheme: 0.7
+    lose: 0.753
+    unlock: 1
+    surfaceFound: 1

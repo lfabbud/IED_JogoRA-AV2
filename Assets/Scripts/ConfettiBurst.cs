@@ -12,12 +12,16 @@ public class ConfettiBurst : MonoBehaviour
         public Vector3 spin;
         public float delay;
         public float life;
+        public float restY;
+        public bool landed;
     }
 
     readonly List<Piece> pieces = new List<Piece>();
     float gravity = 7f;
     float duration;
     float time;
+    bool useFloor;
+    float floorY;
 
     static readonly Color[] Fallback =
     {
@@ -25,8 +29,10 @@ public class ConfettiBurst : MonoBehaviour
         new Color(0.3f, 0.6f, 1f), new Color(0.8f, 0.5f, 1f)
     };
 
-    public void Play(Vector3 localOrigin, Color[] colors, int count, float size, float seconds, float maxDelay = 0.6f)
+    public void Play(Vector3 localOrigin, Color[] colors, int count, float size, float seconds, float maxDelay = 0.6f, bool landOnFloor = false, float floorHeight = 0f)
     {
+        useFloor = landOnFloor;
+        floorY = floorHeight;
         if (colors == null || colors.Length == 0) colors = Fallback;
         duration = seconds;
         var block = new MaterialPropertyBlock();
@@ -55,7 +61,8 @@ public class ConfettiBurst : MonoBehaviour
                 velocity = dir.normalized * Random.Range(3f, 7f),
                 spin = Random.insideUnitSphere * 540f,
                 delay = Random.Range(0f, maxDelay),
-                life = 0f
+                life = 0f,
+                restY = size * 0.06f
             });
             go.SetActive(false);
         }
@@ -78,10 +85,21 @@ public class ConfettiBurst : MonoBehaviour
                 continue;
             }
             anyAlive = true;
+            if (p.landed) { anyAlive = true; continue; }
             p.velocity += Vector3.down * gravity * dt;
             p.velocity *= (1f - 0.6f * dt);
             p.t.localPosition += p.velocity * dt;
             p.t.Rotate(p.spin * dt, Space.Self);
+            // Chão: a peça pousa deitada sobre a superfície e fica parada; nunca passa para baixo dela.
+            if (useFloor && p.t.localPosition.y <= floorY + p.restY)
+            {
+                var pos = p.t.localPosition;
+                pos.y = floorY + p.restY;
+                p.t.localPosition = pos;
+                p.t.localRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+                p.velocity = Vector3.zero;
+                p.landed = true;
+            }
         }
         if (!anyAlive) Destroy(gameObject);
     }

@@ -22,9 +22,9 @@ public class MenuController : MonoBehaviour, IPhasePreview
     void Start()
     {
         OrientationLayout.FollowDevice = catalog.settings != null && catalog.settings.followDeviceOrientation;
-        if (catalog.settings != null) Sfx.Volume = catalog.settings.sfxVolume;
-        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton);
-        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.musicVolume, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
+        if (catalog.settings != null) Sfx.Volume = catalog.settings.soundVolumes.masterGeral;
+        if (catalog.settings != null) Sfx.HookButtons(catalog.settings.sfxButton, null, catalog.settings.soundVolumes.button);
+        if (catalog.settings != null) MusicPlayer.Play(catalog.settings.musicOpening, catalog.settings.soundVolumes.masterGeral * catalog.settings.soundVolumes.music, catalog.settings.musicFadeInSeconds, catalog.settings.musicFadeOutSeconds);
         if (theme != null) theme.ApplyNeutral(catalog);
         if (resetProgressOnStart) SaveSystem.ResetAll(catalog);
         if (unlockAllForTesting)
